@@ -1,0 +1,6 @@
+{
+  "name": "InspireCanvas",
+  "description": "AI-powered motivational quote and poster graphic creator for social media with custom layout options and high-resolution export.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
