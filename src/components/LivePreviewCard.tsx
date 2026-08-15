@@ -1,6 +1,7 @@
 import React from 'react';
 import { QuoteData } from '../types';
 import { Instagram, Twitter, Facebook, Sparkles } from 'lucide-react';
+import { getQuotedText } from '../utils/textUtils';
 
 interface LivePreviewCardProps {
   data: QuoteData;
@@ -61,11 +62,24 @@ export const LivePreviewCard: React.FC<LivePreviewCardProps> = ({
       ? 'text-right'
       : 'text-left';
 
+  // Image fit class
+  const objectFitClass = data.imageFit === 'contain' ? 'object-contain bg-slate-900/10' : 'object-cover';
+
+  // Dynamic aspect ratio wrapper styles
+  const aspectClass =
+    data.aspectRatio === '4:5'
+      ? 'aspect-[4/5] max-w-[440px]'
+      : data.aspectRatio === '9:16'
+      ? 'aspect-[9/16] max-w-[340px]'
+      : 'aspect-square max-w-[540px]';
+
+  const isFullImage = data.imagePosition === 'full' && !!data.imageUri;
+
   return (
     <div className="w-full flex flex-col items-center justify-center py-2 sm:py-4">
       {/* Container Wrapper with aspect ratio */}
       <div
-        className={`relative w-full max-w-[540px] aspect-square rounded-2xl sm:rounded-3xl overflow-hidden shadow-xl sm:shadow-2xl transition-all duration-300 p-2 sm:p-6 flex flex-col justify-center items-center ${
+        className={`relative w-full ${aspectClass} rounded-2xl sm:rounded-3xl overflow-hidden shadow-xl sm:shadow-2xl transition-all duration-300 p-2 sm:p-6 flex flex-col justify-center items-center ${
           isCardStyle
             ? 'bg-slate-950 border border-slate-800'
             : 'border border-slate-800'
@@ -76,18 +90,30 @@ export const LivePreviewCard: React.FC<LivePreviewCardProps> = ({
       >
         {/* Main Card Element */}
         <div
-          className={`w-full h-full flex flex-col justify-between p-4 sm:p-8 transition-all duration-300 shadow-xl relative overflow-hidden ${
+          className={`w-full h-full flex flex-col justify-between p-3.5 sm:p-5 md:p-6 transition-all duration-300 shadow-xl relative overflow-hidden ${
             isCardStyle ? radiusClass : 'rounded-xl sm:rounded-2xl'
           }`}
           style={{
             backgroundColor: data.bgColor,
-            color: data.textColor,
+            color: isFullImage ? '#FFFFFF' : data.textColor,
             borderWidth: data.cardStyle === 'vibrant-accent' ? '3px' : '0px',
             borderColor: data.cardStyle === 'vibrant-accent' ? data.accentColor : 'transparent'
           }}
         >
+          {/* Full Background Image Layer if selected */}
+          {isFullImage && (
+            <div className="absolute inset-0 z-0">
+              <img
+                src={data.imageUri!}
+                alt="Full Background"
+                className={`w-full h-full ${objectFitClass}`}
+              />
+              <div className="absolute inset-0 bg-gradient-to-b from-black/55 via-black/65 to-black/85" />
+            </div>
+          )}
+
           {/* Top Badge (Optional) */}
-          <div className="flex items-center justify-between w-full mb-2 sm:mb-3">
+          <div className="flex items-center justify-between w-full mb-1.5 sm:mb-2 relative z-10 shrink-0">
             {data.showBadge && data.badgeText ? (
               <div
                 className="px-2.5 sm:px-3.5 py-0.5 sm:py-1 text-[10px] sm:text-[11px] font-extrabold uppercase tracking-widest rounded-full text-white shadow-sm flex items-center gap-1"
@@ -101,24 +127,30 @@ export const LivePreviewCard: React.FC<LivePreviewCardProps> = ({
             )}
 
             {/* Subtle Brand Tag */}
-            <span className="text-[9px] sm:text-[10px] font-bold uppercase tracking-wider opacity-40">
-              Poster Studio
+            <span className="text-[9px] sm:text-[10px] font-extrabold uppercase tracking-wider opacity-60 truncate max-w-[160px] sm:max-w-none text-right">
+              {data.author && data.author.trim()
+                ? data.author.trim().toLowerCase().endsWith('studio')
+                  ? data.author.trim()
+                  : `${data.author.trim()} STUDIO`
+                : 'STUDIO'}
             </span>
           </div>
 
           {/* Main Content Area Layout based on imagePosition */}
-          <div className="flex-1 flex flex-col justify-center my-1 sm:my-2 gap-2 sm:gap-4 overflow-hidden">
+          <div
+            className="flex-1 flex flex-col items-center justify-center text-center w-full my-auto overflow-hidden relative z-10 gap-2 sm:gap-3"
+          >
             {/* TOP IMAGE LAYOUT */}
             {data.imagePosition === 'top' && data.imageUri && (
-              <div className="flex justify-center mb-1 sm:mb-2">
+              <div className="flex justify-center items-center w-full shrink-0">
                 <div
-                  className={`relative p-0.5 sm:p-1 border-2 sm:border-4 shadow-lg overflow-hidden w-20 h-20 sm:w-28 sm:h-28 ${imageShapeClass}`}
+                  className={`relative p-0.5 sm:p-1 border-2 sm:border-3 shadow-md overflow-hidden w-18 h-18 sm:w-24 sm:h-24 md:w-28 md:h-28 shrink-0 ${imageShapeClass}`}
                   style={{ borderColor: data.accentColor }}
                 >
                   <img
                     src={data.imageUri}
                     alt="Author/Inspiration"
-                    className="w-full h-full object-cover"
+                    className={`w-full h-full ${objectFitClass}`}
                   />
                 </div>
               </div>
@@ -127,7 +159,7 @@ export const LivePreviewCard: React.FC<LivePreviewCardProps> = ({
             {/* LEFT / RIGHT SPLIT LAYOUT */}
             {(data.imagePosition === 'left' || data.imagePosition === 'right') && data.imageUri ? (
               <div
-                className={`flex items-center gap-3 sm:gap-5 my-auto ${
+                className={`flex items-center justify-center gap-3 sm:gap-5 w-full my-auto ${
                   data.imagePosition === 'right' ? 'flex-row-reverse' : 'flex-row'
                 }`}
               >
@@ -138,25 +170,32 @@ export const LivePreviewCard: React.FC<LivePreviewCardProps> = ({
                   <img
                     src={data.imageUri}
                     alt="Inspiration"
-                    className="w-full h-full object-cover"
+                    className={`w-full h-full ${objectFitClass}`}
                   />
                 </div>
 
-                <div className={`flex-1 min-w-0 ${textAlignClass}`}>
-                  {data.showQuotes && (
-                    <div
-                      className="text-2xl sm:text-4xl font-serif leading-none mb-1 opacity-40"
-                      style={{ color: data.accentColor }}
-                    >
-                      “
-                    </div>
-                  )}
-                  <p className={`${fontFamilyClass} ${fontSizeClass} whitespace-pre-line break-words`}>
-                    {data.text || 'Write your motivational message here...'}
+                <div
+                  className={`flex-1 min-w-0 flex flex-col justify-center ${textAlignClass} ${
+                    data.textBgColor && data.textBgColor !== 'transparent'
+                      ? 'p-2.5 sm:p-4 rounded-xl sm:rounded-2xl shadow-sm'
+                      : ''
+                  }`}
+                  style={{
+                    backgroundColor:
+                      data.textBgColor && data.textBgColor !== 'transparent'
+                        ? data.textBgColor
+                        : undefined
+                  }}
+                >
+                  <p
+                    className={`${fontFamilyClass} ${fontSizeClass} whitespace-pre-line break-words`}
+                    style={{ color: data.textColor }}
+                  >
+                    {getQuotedText(data.text)}
                   </p>
                   {data.author && (
                     <p
-                      className="mt-2 sm:mt-3 text-xs sm:text-sm font-semibold tracking-wide truncate"
+                      className="mt-1 sm:mt-2 text-xs sm:text-sm font-semibold tracking-wide truncate"
                       style={{ color: data.accentColor }}
                     >
                       — {data.author}
@@ -165,23 +204,34 @@ export const LivePreviewCard: React.FC<LivePreviewCardProps> = ({
                 </div>
               </div>
             ) : (
-              /* TOP / BOTTOM / NO-IMAGE LAYOUT FOR TEXT */
-              <div className={`w-full ${textAlignClass} my-auto`}>
-                {data.showQuotes && (
-                  <div
-                    className="text-3xl sm:text-5xl font-serif leading-none mb-1 sm:mb-2 opacity-40"
-                    style={{ color: data.accentColor }}
-                  >
-                    “
-                  </div>
-                )}
-                <p className={`${fontFamilyClass} ${fontSizeClass} whitespace-pre-line break-words`}>
-                  {data.text || 'Write your motivational message here...'}
+              /* TOP / BOTTOM / FULL / NO-IMAGE LAYOUT FOR TEXT */
+              <div
+                className={`w-full flex flex-col items-center justify-center ${textAlignClass} ${
+                  data.textBgColor && data.textBgColor !== 'transparent'
+                    ? 'p-2.5 sm:p-4 rounded-xl sm:rounded-2xl shadow-sm'
+                    : ''
+                }`}
+                style={{
+                  backgroundColor:
+                    data.textBgColor && data.textBgColor !== 'transparent'
+                      ? data.textBgColor
+                      : undefined
+                }}
+              >
+                <p
+                  className={`${fontFamilyClass} ${fontSizeClass} whitespace-pre-line break-words`}
+                  style={{ color: data.textColor }}
+                >
+                  {getQuotedText(data.text)}
                 </p>
 
                 {data.author && (
                   <p
-                    className="mt-2 sm:mt-4 text-xs sm:text-base font-semibold tracking-wide"
+                    className={`${
+                      data.imagePosition === 'top' || data.imagePosition === 'bottom'
+                        ? 'mt-1 sm:mt-1.5 text-xs sm:text-sm'
+                        : 'mt-1.5 sm:mt-2.5 text-xs sm:text-base'
+                    } font-semibold tracking-wide`}
                     style={{ color: data.accentColor }}
                   >
                     — {data.author}
@@ -192,15 +242,15 @@ export const LivePreviewCard: React.FC<LivePreviewCardProps> = ({
 
             {/* BOTTOM IMAGE LAYOUT */}
             {data.imagePosition === 'bottom' && data.imageUri && (
-              <div className="flex justify-center mt-1 sm:mt-3">
+              <div className="flex justify-center items-center w-full shrink-0">
                 <div
-                  className={`relative p-0.5 sm:p-1 border-2 sm:border-4 shadow-lg overflow-hidden w-20 h-20 sm:w-28 sm:h-28 ${imageShapeClass}`}
+                  className={`relative p-0.5 sm:p-1 border-2 sm:border-3 shadow-md overflow-hidden w-18 h-18 sm:w-24 sm:h-24 md:w-28 md:h-28 shrink-0 ${imageShapeClass}`}
                   style={{ borderColor: data.accentColor }}
                 >
                   <img
                     src={data.imageUri}
                     alt="Inspiration"
-                    className="w-full h-full object-cover"
+                    className={`w-full h-full ${objectFitClass}`}
                   />
                 </div>
               </div>
@@ -208,7 +258,7 @@ export const LivePreviewCard: React.FC<LivePreviewCardProps> = ({
           </div>
 
           {/* Footer Metadata Line */}
-          <div className="pt-2 sm:pt-4 border-t border-current/15 flex items-center justify-between mt-1 sm:mt-2 text-[10px] sm:text-xs font-semibold gap-1">
+          <div className="pt-2 sm:pt-3 border-t border-current/20 flex items-center justify-between mt-1 text-[10px] sm:text-xs font-semibold gap-1 relative z-10 shrink-0">
             {/* Social Handle */}
             <div className="flex items-center gap-1.5 min-w-0">
               <span
@@ -217,7 +267,7 @@ export const LivePreviewCard: React.FC<LivePreviewCardProps> = ({
               />
               <div className="flex items-center gap-1 sm:gap-1.5 opacity-90 min-w-0">
                 {data.showSocialIcons && (
-                  <div className="flex items-center gap-1 text-slate-700 shrink-0">
+                  <div className="flex items-center gap-1 opacity-80 shrink-0">
                     <Instagram className="w-3 h-3 sm:w-3.5 sm:h-3.5" />
                     <Twitter className="w-3 h-3 sm:w-3.5 sm:h-3.5" />
                   </div>

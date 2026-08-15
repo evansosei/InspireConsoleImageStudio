@@ -20,7 +20,7 @@ import {
   Check
 } from 'lucide-react';
 import { QuoteData, ImagePosition, TextAlign, FontSize, FontFamily, BorderRadius, ImageShape, CardStyle } from '../types';
-import { COLOR_PRESETS, MOTIVATION_THEMES } from '../data/presets';
+import { COLOR_PRESETS, TEXT_COLOR_PRESETS, TEXT_BG_PRESETS, MOTIVATION_THEMES } from '../data/presets';
 
 interface ControlsPanelProps {
   data: QuoteData;
@@ -161,25 +161,51 @@ export const ControlsPanel: React.FC<ControlsPanelProps> = ({
         )}
       </div>
 
-      {/* 2. IMAGE POSITION SELECTOR */}
+      {/* 2. IMAGE POSITION & FIT SELECTOR */}
       {data.imageUri && (
         <div className="space-y-2">
-          <label className="text-xs font-bold uppercase tracking-wider text-slate-500 flex items-center gap-1.5">
-            <Layout className="w-4 h-4 text-orange-600" />
-            <span>Image Position</span>
-          </label>
-          <div className="grid grid-cols-4 gap-1 bg-slate-100 p-1 rounded-xl border border-slate-200/60">
-            {(['left', 'top', 'right', 'bottom'] as ImagePosition[]).map((pos) => (
+          <div className="flex items-center justify-between">
+            <label className="text-xs font-bold uppercase tracking-wider text-slate-500 flex items-center gap-1.5">
+              <Layout className="w-4 h-4 text-orange-600" />
+              <span>Image Layout & Position</span>
+            </label>
+            {/* Image Fit: Cover vs Contain */}
+            <div className="flex items-center gap-1 bg-slate-100 p-0.5 rounded-lg text-[10px] font-bold">
+              <button
+                type="button"
+                onClick={() => onChange({ imageFit: 'cover' })}
+                className={`px-2 py-0.5 rounded transition-all ${
+                  (data.imageFit || 'cover') === 'cover' ? 'bg-white shadow-sm text-slate-900' : 'text-slate-500'
+                }`}
+                title="Fill frame (crop if needed)"
+              >
+                Cover
+              </button>
+              <button
+                type="button"
+                onClick={() => onChange({ imageFit: 'contain' })}
+                className={`px-2 py-0.5 rounded transition-all ${
+                  data.imageFit === 'contain' ? 'bg-white shadow-sm text-slate-900' : 'text-slate-500'
+                }`}
+                title="Full uncropped view"
+              >
+                Full View
+              </button>
+            </div>
+          </div>
+          <div className="grid grid-cols-5 gap-1 bg-slate-100 p-1 rounded-xl border border-slate-200/60">
+            {(['left', 'top', 'right', 'bottom', 'full'] as ImagePosition[]).map((pos) => (
               <button
                 key={pos}
+                type="button"
                 onClick={() => onChange({ imagePosition: pos })}
-                className={`py-1.5 px-2 text-xs font-bold capitalize rounded-lg transition-all flex flex-col items-center gap-1 ${
+                className={`py-1.5 px-1 text-xs font-bold capitalize rounded-lg transition-all flex flex-col items-center gap-0.5 ${
                   data.imagePosition === pos
                     ? 'bg-white text-slate-900 shadow-sm font-extrabold'
                     : 'text-slate-500 hover:text-slate-800'
                 }`}
               >
-                <span className="text-[11px]">{pos.toUpperCase()}</span>
+                <span className="text-[10px]">{pos === 'full' ? 'FULL BG' : pos.toUpperCase()}</span>
               </button>
             ))}
           </div>
@@ -249,7 +275,7 @@ export const ControlsPanel: React.FC<ControlsPanelProps> = ({
             type="text"
             value={data.author}
             onChange={(e) => onChange({ author: e.target.value })}
-            placeholder="e.g. Sir Handel"
+            placeholder="e.g. Poster Studio"
             className="w-full bg-white border border-slate-200 focus:border-orange-500 focus:ring-2 focus:ring-orange-500/20 rounded-xl p-2.5 text-xs text-slate-900 placeholder-slate-400 focus:outline-none shadow-sm"
           />
         </div>
@@ -263,61 +289,192 @@ export const ControlsPanel: React.FC<ControlsPanelProps> = ({
             type="text"
             value={data.socialHandle}
             onChange={(e) => onChange({ socialHandle: e.target.value })}
-            placeholder="e.g. @SirHandel"
+            placeholder="e.g. @PosterStudio"
             className="w-full bg-white border border-slate-200 focus:border-orange-500 focus:ring-2 focus:ring-orange-500/20 rounded-xl p-2.5 text-xs text-slate-900 placeholder-slate-400 focus:outline-none shadow-sm"
           />
         </div>
       </div>
 
-      {/* 5. BACKGROUND COLOR & PRESETS */}
-      <div className="space-y-3 pt-2 border-t border-slate-200/80">
-        <div className="flex items-center justify-between">
-          <label className="text-xs font-bold uppercase tracking-wider text-slate-500 flex items-center gap-1.5">
-            <Palette className="w-4 h-4 text-orange-600" />
-            <span>Canvas Styling</span>
-          </label>
+      {/* 5. TEXT COLOR & TEXT BACKGROUND COLOR */}
+      <div className="space-y-4 pt-2 border-t border-slate-200/80">
+        {/* TEXT COLOR PICKER */}
+        <div className="space-y-2.5">
+          <div className="flex items-center justify-between">
+            <label className="text-xs font-bold uppercase tracking-wider text-slate-700 flex items-center gap-1.5">
+              <Type className="w-4 h-4 text-orange-600" />
+              <span>Text Color</span>
+            </label>
 
-          <div className="flex items-center gap-2">
-            <span className="text-[10px] text-slate-400 font-semibold">Custom:</span>
-            <input
-              type="color"
-              value={data.bgColor}
-              onChange={(e) => onChange({ bgColor: e.target.value })}
-              className="w-6 h-6 rounded-full border-2 border-white shadow-sm cursor-pointer bg-transparent"
-              title="Custom color picker"
-            />
+            <div className="flex items-center gap-1.5 bg-white border border-slate-200/80 rounded-lg px-2 py-0.5 shadow-xs">
+              <span className="text-[10px] text-slate-500 font-mono font-semibold uppercase">{data.textColor}</span>
+              <input
+                type="color"
+                value={data.textColor}
+                onChange={(e) => onChange({ textColor: e.target.value })}
+                className="w-5 h-5 rounded-full border border-slate-300 shadow-xs cursor-pointer bg-transparent"
+                title="Choose custom text font color"
+              />
+            </div>
+          </div>
+
+          {/* Quick Swatches for Text Color */}
+          <div className="flex items-center gap-2 sm:gap-1.5 flex-wrap">
+            {TEXT_COLOR_PRESETS.map((tc) => {
+              const isSelected = data.textColor.toLowerCase() === tc.hex.toLowerCase();
+              return (
+                <button
+                  key={tc.name}
+                  onClick={() => onChange({ textColor: tc.hex })}
+                  className={`w-8 h-8 sm:w-7 sm:h-7 rounded-full border cursor-pointer transition-all hover:scale-110 relative flex items-center justify-center shadow-xs active:scale-95 ${
+                    isSelected
+                      ? 'ring-2 ring-orange-500 ring-offset-1 scale-105 border-transparent'
+                      : 'border-slate-300'
+                  }`}
+                  style={{ backgroundColor: tc.hex }}
+                  title={`${tc.name} (${tc.hex})`}
+                >
+                  {isSelected && (
+                    <Check
+                      className={`w-3.5 h-3.5 ${
+                        tc.hex === '#FFFFFF' || tc.hex === '#FEF08A' || tc.hex === '#FED7AA'
+                          ? 'text-slate-900'
+                          : 'text-white'
+                      }`}
+                    />
+                  )}
+                </button>
+              );
+            })}
           </div>
         </div>
 
-        {/* Preset Colors Swatches */}
-        <div className="flex items-center gap-2 flex-wrap">
-          {COLOR_PRESETS.map((p) => {
-            const isSelected = data.bgColor.toLowerCase() === p.hex.toLowerCase();
-            return (
-              <button
-                key={p.name}
-                onClick={() =>
-                  onChange({
-                    bgColor: p.hex,
-                    textColor: p.textColor,
-                    accentColor: p.accentColor
-                  })
-                }
-                className={`w-8 h-8 rounded-full border border-slate-200/80 cursor-pointer transition-transform hover:scale-110 relative flex items-center justify-center shadow-sm ${
-                  isSelected ? 'ring-2 ring-orange-500 ring-offset-2 scale-105' : ''
-                }`}
-                style={{ backgroundColor: p.hex }}
-                title={p.name}
-              >
-                {isSelected && (
-                  <Check
-                    className="w-3.5 h-3.5"
-                    style={{ color: p.textColor }}
+        {/* TEXT BACKGROUND / HIGHLIGHT BOX COLOR */}
+        <div className="space-y-2.5 pt-2 border-t border-slate-200/60">
+          <div className="flex items-center justify-between">
+            <div className="flex flex-col">
+              <label className="text-xs font-bold uppercase tracking-wider text-slate-700 flex items-center gap-1.5">
+                <Palette className="w-4 h-4 text-orange-600" />
+                <span>Text Background Color</span>
+              </label>
+              <span className="text-[10px] text-slate-400">Add a highlight container behind the quote text</span>
+            </div>
+
+            <div className="flex items-center gap-2">
+              {data.textBgColor && data.textBgColor !== 'transparent' && (
+                <button
+                  onClick={() => onChange({ textBgColor: 'transparent' })}
+                  className="text-[10px] font-semibold text-rose-600 hover:text-rose-700 underline cursor-pointer"
+                  title="Remove text background box"
+                >
+                  Clear
+                </button>
+              )}
+              <div className="flex items-center gap-1.5 bg-white border border-slate-200/80 rounded-lg px-2 py-0.5 shadow-xs">
+                <span className="text-[10px] text-slate-500 font-mono font-semibold">
+                  {data.textBgColor === 'transparent' || !data.textBgColor ? 'None' : 'Custom'}
+                </span>
+                <input
+                  type="color"
+                  value={
+                    data.textBgColor && data.textBgColor !== 'transparent'
+                      ? data.textBgColor.startsWith('#')
+                        ? data.textBgColor
+                        : '#18181B'
+                      : '#FFFFFF'
+                  }
+                  onChange={(e) => onChange({ textBgColor: e.target.value })}
+                  className="w-5 h-5 rounded-full border border-slate-300 shadow-xs cursor-pointer bg-transparent"
+                  title="Choose custom text background highlight color"
+                />
+              </div>
+            </div>
+          </div>
+
+          {/* Quick Swatches for Text Background */}
+          <div className="flex items-center gap-2 flex-wrap">
+            {TEXT_BG_PRESETS.map((tb) => {
+              const isSelected =
+                (!data.textBgColor && tb.value === 'transparent') ||
+                data.textBgColor === tb.value ||
+                data.textBgColor?.toLowerCase() === tb.value.toLowerCase();
+
+              return (
+                <button
+                  key={tb.name}
+                  onClick={() => onChange({ textBgColor: tb.value })}
+                  className={`px-2.5 py-1 rounded-lg border text-xs font-semibold cursor-pointer transition-all flex items-center gap-1.5 shadow-xs ${
+                    isSelected
+                      ? 'ring-2 ring-orange-500 ring-offset-1 border-orange-500 bg-orange-50/50 text-orange-950 font-bold'
+                      : 'border-slate-200/90 bg-white/80 hover:bg-slate-50 text-slate-700'
+                  }`}
+                  title={tb.name}
+                >
+                  <span
+                    className={`w-3 h-3 rounded-full shrink-0 ${
+                      tb.border ? 'border border-slate-300' : ''
+                    }`}
+                    style={{
+                      backgroundColor:
+                        tb.value === 'transparent' ? 'transparent' : tb.previewBg
+                    }}
                   />
-                )}
-              </button>
-            );
-          })}
+                  <span>{tb.name}</span>
+                </button>
+              );
+            })}
+          </div>
+        </div>
+
+        {/* CANVAS & ACCENT COLOR */}
+        <div className="space-y-2.5 pt-2 border-t border-slate-200/60">
+          <div className="flex items-center justify-between">
+            <label className="text-xs font-bold uppercase tracking-wider text-slate-700 flex items-center gap-1.5">
+              <Palette className="w-4 h-4 text-orange-600" />
+              <span>Canvas Background</span>
+            </label>
+
+            <div className="flex items-center gap-1.5 bg-white border border-slate-200/80 rounded-lg px-2 py-0.5 shadow-xs">
+              <span className="text-[10px] text-slate-500 font-mono font-semibold uppercase">{data.bgColor}</span>
+              <input
+                type="color"
+                value={data.bgColor}
+                onChange={(e) => onChange({ bgColor: e.target.value })}
+                className="w-5 h-5 rounded-full border border-slate-300 shadow-xs cursor-pointer bg-transparent"
+                title="Custom canvas background color picker"
+              />
+            </div>
+          </div>
+
+          {/* Preset Colors Swatches */}
+          <div className="flex items-center gap-2 flex-wrap">
+            {COLOR_PRESETS.map((p) => {
+              const isSelected = data.bgColor.toLowerCase() === p.hex.toLowerCase();
+              return (
+                <button
+                  key={p.name}
+                  onClick={() =>
+                    onChange({
+                      bgColor: p.hex,
+                      textColor: p.textColor,
+                      accentColor: p.accentColor
+                    })
+                  }
+                  className={`w-8 h-8 sm:w-7 sm:h-7 rounded-full border border-slate-200/80 cursor-pointer transition-transform hover:scale-110 relative flex items-center justify-center shadow-xs active:scale-95 ${
+                    isSelected ? 'ring-2 ring-orange-500 ring-offset-1 scale-105' : ''
+                  }`}
+                  style={{ backgroundColor: p.hex }}
+                  title={p.name}
+                >
+                  {isSelected && (
+                    <Check
+                      className="w-3.5 h-3.5"
+                      style={{ color: p.textColor }}
+                    />
+                  )}
+                </button>
+              );
+            })}
+          </div>
         </div>
       </div>
 
@@ -395,7 +552,21 @@ export const ControlsPanel: React.FC<ControlsPanelProps> = ({
           </div>
         </div>
 
-        <div className="grid grid-cols-2 sm:grid-cols-3 gap-2 pt-1">
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-2 pt-1">
+          {/* Aspect Ratio */}
+          <div className="space-y-1">
+            <span className="text-[10px] text-slate-400 font-bold uppercase">Format</span>
+            <select
+              value={data.aspectRatio || '1:1'}
+              onChange={(e) => onChange({ aspectRatio: e.target.value as any })}
+              className="w-full bg-white border border-slate-200 rounded-lg p-1.5 text-xs text-slate-800 font-medium"
+            >
+              <option value="1:1">1:1 Square (1080p)</option>
+              <option value="4:5">4:5 Portrait (1080×1350)</option>
+              <option value="9:16">9:16 Story (1080×1920)</option>
+            </select>
+          </div>
+
           {/* Image Shape */}
           <div className="space-y-1">
             <span className="text-[10px] text-slate-400 font-bold uppercase">Image Shape</span>
@@ -424,20 +595,6 @@ export const ControlsPanel: React.FC<ControlsPanelProps> = ({
               <option value="dark-luxury">Dark Luxury</option>
               <option value="vibrant-accent">Vibrant Accent</option>
             </select>
-          </div>
-
-          {/* Quote Mark Toggle */}
-          <div className="space-y-1 flex flex-col justify-end">
-            <button
-              onClick={() => onChange({ showQuotes: !data.showQuotes })}
-              className={`w-full py-2 px-3 rounded-lg text-xs font-bold border transition-colors ${
-                data.showQuotes
-                  ? 'bg-orange-50 border-orange-200 text-orange-700'
-                  : 'bg-white border-slate-200 text-slate-500'
-              }`}
-            >
-              {data.showQuotes ? '“ Quotes: ON' : '“ Quotes: OFF'}
-            </button>
           </div>
         </div>
       </div>

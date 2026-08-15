@@ -1,4 +1,4 @@
-import { ColorPreset, QuoteTemplate, StockImage } from '../types';
+import { ColorPreset, QuoteTemplate, StockImage, QuoteData } from '../types';
 import defaultPortrait from '../assets/images/evans_default_portrait_1786544027588.jpg';
 
 export const COLOR_PRESETS: ColorPreset[] = [
@@ -13,6 +13,43 @@ export const COLOR_PRESETS: ColorPreset[] = [
   { name: 'Lavender Purple', hex: '#F3E8FF', textColor: '#581C87', accentColor: '#9333EA' },
   { name: 'Rose Gold', hex: '#FFE4E6', textColor: '#881337', accentColor: '#E11D48' },
   { name: 'Slate Gray', hex: '#334155', textColor: '#F8FAFC', accentColor: '#38BDF8' }
+];
+
+export interface TextColorPreset {
+  name: string;
+  hex: string;
+}
+
+export const TEXT_COLOR_PRESETS: TextColorPreset[] = [
+  { name: 'Dark Slate', hex: '#0F172A' },
+  { name: 'Pure White', hex: '#FFFFFF' },
+  { name: 'Charcoal Black', hex: '#18181B' },
+  { name: 'Navy Blue', hex: '#1E3A8A' },
+  { name: 'Warm Amber', hex: '#D97706' },
+  { name: 'Vibrant Orange', hex: '#EA580C' },
+  { name: 'Forest Green', hex: '#047857' },
+  { name: 'Crimson Red', hex: '#BE123C' },
+  { name: 'Royal Purple', hex: '#7C3AED' },
+  { name: 'Warm Brown', hex: '#78350F' }
+];
+
+export interface TextBgPreset {
+  name: string;
+  value: string;
+  previewBg: string;
+  border?: boolean;
+}
+
+export const TEXT_BG_PRESETS: TextBgPreset[] = [
+  { name: 'None (Transparent)', value: 'transparent', previewBg: 'transparent', border: true },
+  { name: 'Dark Translucent', value: 'rgba(15, 23, 42, 0.85)', previewBg: '#0F172A' },
+  { name: 'White Glass', value: 'rgba(255, 255, 255, 0.90)', previewBg: '#FFFFFF', border: true },
+  { name: 'Soft Cream', value: 'rgba(254, 240, 138, 0.85)', previewBg: '#FEF08A' },
+  { name: 'Warm Amber', value: 'rgba(254, 215, 170, 0.85)', previewBg: '#FED7AA' },
+  { name: 'Soft Emerald', value: 'rgba(220, 252, 231, 0.85)', previewBg: '#DCFCE7' },
+  { name: 'Soft Lavender', value: 'rgba(243, 232, 255, 0.85)', previewBg: '#F3E8FF' },
+  { name: 'Soft Rose', value: 'rgba(255, 228, 230, 0.85)', previewBg: '#FFE4E6' },
+  { name: 'Charcoal Solid', value: '#18181B', previewBg: '#18181B' }
 ];
 
 export const MOTIVATION_THEMES = [
@@ -93,8 +130,8 @@ export const STARTER_TEMPLATES: QuoteTemplate[] = [
     description: 'Rounded light quote card with dark backdrop, top profile image, orange accents, and bold quote.',
     data: {
       text: "When you are an original and walk in God's plan, you shine like a star in the firmament.",
-      author: "Sir Evans",
-      socialHandle: "@SirEvans",
+      author: "Poster Studio",
+      socialHandle: "@PosterStudio",
       imageUri: defaultPortrait,
       imagePosition: 'top',
       bgColor: '#FEF08A',
@@ -182,5 +219,73 @@ export const STARTER_TEMPLATES: QuoteTemplate[] = [
       showBadge: true,
       badgeText: 'DAILY PERSPECTIVE'
     }
+  },
+  {
+    id: 'emerald-growth',
+    name: 'Emerald Growth',
+    description: 'Fresh mint and emerald theme with clean typography and uplifting tone.',
+    data: {
+      text: "Every small step in the right direction leads to the summit of your dreams.",
+      author: "Grace Asante",
+      socialHandle: "@GraceAsante",
+      imageUri: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&q=80&w=600',
+      imagePosition: 'top',
+      bgColor: '#DCFCE7',
+      textColor: '#064E3B',
+      accentColor: '#059669',
+      fontFamily: 'sans',
+      fontSize: 'large',
+      textAlign: 'center',
+      borderRadius: 'large',
+      imageShape: 'circle',
+      cardStyle: 'reference-inspired',
+      showQuotes: true,
+      showBadge: true,
+      badgeText: 'GROWTH MINDSET'
+    }
+  },
+  {
+    id: 'sunset-vibes',
+    name: 'Sunset Peach Warmth',
+    description: 'Warm peach palette with bold crimson display typography.',
+    data: {
+      text: "Your potential is limitless when you align purpose with consistent daily action.",
+      author: "Kwame Mensah",
+      socialHandle: "@KwameMensah",
+      imageUri: 'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?auto=format&fit=crop&q=80&w=600',
+      imagePosition: 'top',
+      bgColor: '#FFEDD5',
+      textColor: '#7C2D12',
+      accentColor: '#EA580C',
+      fontFamily: 'serif',
+      fontSize: 'large',
+      textAlign: 'center',
+      borderRadius: 'large',
+      imageShape: 'circle',
+      cardStyle: 'reference-inspired',
+      showQuotes: true,
+      showBadge: true,
+      badgeText: 'DAILY FIRE'
+    }
   }
 ];
+
+export const getRandomPresetData = (): Partial<QuoteData> => {
+  const bg = COLOR_PRESETS[Math.floor(Math.random() * COLOR_PRESETS.length)];
+  const fontFamilies: ('sans' | 'serif' | 'display' | 'handwriting')[] = ['sans', 'serif', 'display', 'handwriting'];
+  const fontSizes: ('small' | 'medium' | 'large' | 'xlarge')[] = ['medium', 'large'];
+  const alignments: ('left' | 'center' | 'right')[] = ['left', 'center'];
+  const positions: ('top' | 'left' | 'right' | 'bottom' | 'full')[] = ['top', 'left', 'bottom'];
+  const shapes: ('circle' | 'rounded' | 'square')[] = ['circle', 'rounded'];
+
+  return {
+    bgColor: bg.hex,
+    textColor: bg.textColor,
+    accentColor: bg.accentColor,
+    fontFamily: fontFamilies[Math.floor(Math.random() * fontFamilies.length)],
+    fontSize: fontSizes[Math.floor(Math.random() * fontSizes.length)],
+    textAlign: alignments[Math.floor(Math.random() * alignments.length)],
+    imagePosition: positions[Math.floor(Math.random() * positions.length)],
+    imageShape: shapes[Math.floor(Math.random() * shapes.length)]
+  };
+};

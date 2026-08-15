@@ -66,7 +66,7 @@ Guidelines:
 - Avoid generic SaaS or buzzword fluff. Focus on deep human resilience, purpose, courage, character, and faith/hope.`;
 
     const response = await ai.models.generateContent({
-      model: "gemini-3.6-flash",
+      model: "gemini-2.5-flash",
       contents: prompt,
       config: {
         temperature: 0.9,

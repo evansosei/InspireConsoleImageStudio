@@ -1,4 +1,5 @@
 import { QuoteData } from '../types';
+import { getQuotedText } from './textUtils';
 
 export function getCanvasDimensions(aspectRatio: '1:1' | '4:5' | '9:16' = '1:1') {
   switch (aspectRatio) {
@@ -20,7 +21,13 @@ export function loadImage(src: string): Promise<HTMLImageElement> {
     const img = new Image();
     img.crossOrigin = 'anonymous';
     img.onload = () => resolve(img);
-    img.onerror = (err) => reject(err);
+    img.onerror = () => {
+      // Fallback without crossOrigin in case CORS headers are omitted
+      const fallbackImg = new Image();
+      fallbackImg.onload = () => resolve(fallbackImg);
+      fallbackImg.onerror = (err) => reject(err);
+      fallbackImg.src = src;
+    };
     img.src = src;
   });
 }
@@ -44,10 +51,9 @@ export async function renderQuoteCanvas(
   ctx.save();
   ctx.scale(scale, scale);
 
-  // 1. Draw Outer Canvas Background (Dark Luxury backdrop for card styles or direct full fill)
+  // 1. Draw Outer Canvas Background (Dark luxury backdrop for card styles, or direct background)
   const isCardStyle = data.cardStyle === 'reference-inspired' || data.cardStyle === 'dark-luxury';
   if (isCardStyle) {
-    // Backdrop gradient / dark luxury canvas fill
     const backdropGrad = ctx.createLinearGradient(0, 0, width, height);
     if (data.cardStyle === 'dark-luxury') {
       backdropGrad.addColorStop(0, '#020617');
@@ -59,37 +65,36 @@ export async function renderQuoteCanvas(
     ctx.fillStyle = backdropGrad;
     ctx.fillRect(0, 0, width, height);
 
-    // Subtle decorative grid or light circles in backdrop
+    // Subtle decorative ambient glow in backdrop
     ctx.fillStyle = 'rgba(255, 255, 255, 0.03)';
     ctx.beginPath();
-    ctx.arc(width * 0.15, height * 0.15, 300, 0, Math.PI * 2);
-    ctx.arc(width * 0.85, height * 0.85, 250, 0, Math.PI * 2);
+    ctx.arc(width * 0.15, height * 0.15, 320, 0, Math.PI * 2);
+    ctx.arc(width * 0.85, height * 0.85, 280, 0, Math.PI * 2);
     ctx.fill();
   } else {
-    // Full background
     ctx.fillStyle = data.bgColor;
     ctx.fillRect(0, 0, width, height);
   }
 
-  // 2. Determine Inner Card Box
+  // 2. Determine Inner Card Box Dimensions (Exact match with live preview margin/padding)
   let cardX = 0;
   let cardY = 0;
   let cardW = width;
   let cardH = height;
 
   if (isCardStyle) {
-    const marginX = 64;
-    const marginY = 64;
+    const marginX = 52;
+    const marginY = 52;
     cardX = marginX;
     cardY = marginY;
     cardW = width - marginX * 2;
     cardH = height - marginY * 2;
 
-    // Draw Inner Card Background with border radius & shadow
+    // Draw Inner Card Background with border radius & soft shadow
     ctx.save();
     ctx.shadowColor = 'rgba(0, 0, 0, 0.35)';
-    ctx.shadowBlur = 30;
-    ctx.shadowOffsetY = 15;
+    ctx.shadowBlur = 32;
+    ctx.shadowOffsetY = 16;
 
     ctx.fillStyle = data.bgColor;
     const radius = data.borderRadius === 'none' ? 0 : data.borderRadius === 'small' ? 16 : data.borderRadius === 'medium' ? 32 : 48;
@@ -98,45 +103,24 @@ export async function renderQuoteCanvas(
     ctx.restore();
   }
 
-  // Card Content Area Padding
-  const pad = 56;
+  // If card style has vibrant accent border
+  if (data.cardStyle === 'vibrant-accent') {
+    ctx.save();
+    ctx.strokeStyle = data.accentColor || '#EA580C';
+    ctx.lineWidth = 6;
+    drawRoundedRect(ctx, cardX + 3, cardY + 3, cardW - 6, cardH - 6, 24);
+    ctx.stroke();
+    ctx.restore();
+  }
+
+  // Card Content Area Padding (matches live preview p-5 md:p-6 relative scale)
+  const pad = 54;
   const contentX = cardX + pad;
   const contentY = cardY + pad;
   const contentW = cardW - pad * 2;
   const contentH = cardH - pad * 2;
 
-  // 3. Top Badge (Optional)
-  let currentY = contentY;
-
-  if (data.showBadge && data.badgeText) {
-    ctx.font = '700 14px "Inter", system-ui, sans-serif';
-    const badgeText = data.badgeText.toUpperCase();
-    const metrics = ctx.measureText(badgeText);
-    const badgeW = metrics.width + 32;
-    const badgeH = 32;
-
-    let badgeX = contentX;
-    if (data.textAlign === 'center') {
-      badgeX = contentX + (contentW - badgeW) / 2;
-    } else if (data.textAlign === 'right') {
-      badgeX = contentX + contentW - badgeW;
-    }
-
-    ctx.save();
-    ctx.fillStyle = data.accentColor || '#EA580C';
-    drawRoundedRect(ctx, badgeX, currentY, badgeW, badgeH, 16);
-    ctx.fill();
-
-    ctx.fillStyle = '#FFFFFF';
-    ctx.textAlign = 'center';
-    ctx.textBaseline = 'middle';
-    ctx.fillText(badgeText, badgeX + badgeW / 2, currentY + badgeH / 2 + 1);
-    ctx.restore();
-
-    currentY += badgeH + 32;
-  }
-
-  // 4. Load & Prepare Image if exists
+  // 3. Load & Prepare Image if exists
   let loadedImg: HTMLImageElement | null = null;
   if (data.imageUri) {
     try {
@@ -146,173 +130,300 @@ export async function renderQuoteCanvas(
     }
   }
 
-  // Layout handling based on image position: Left, Right, Top, Bottom
   const hasImg = loadedImg !== null;
   const imgPos = data.imagePosition;
 
-  // Image size constants
-  let imgBoxSize = 180;
-  if (imgPos === 'left' || imgPos === 'right') {
-    imgBoxSize = 240;
-  }
-
-  // Area allocations
-  let textAreaX = contentX;
-  let textAreaY = currentY;
-  let textAreaW = contentW;
-  let textAreaH = contentY + contentH - currentY - 80; // Reserve space for footer
-
-  let imgX = contentX;
-  let imgY = currentY;
-
-  if (hasImg) {
-    if (imgPos === 'top') {
-      imgX = contentX + (contentW - imgBoxSize) / 2;
-      imgY = currentY;
-      currentY += imgBoxSize + 32;
-      textAreaY = currentY;
-    } else if (imgPos === 'bottom') {
-      imgX = contentX + (contentW - imgBoxSize) / 2;
-      imgY = contentY + contentH - 120 - imgBoxSize;
-      textAreaH = imgY - textAreaY - 24;
-    } else if (imgPos === 'left') {
-      imgX = contentX;
-      imgY = currentY + 20;
-      textAreaX = contentX + imgBoxSize + 40;
-      textAreaW = contentW - imgBoxSize - 40;
-    } else if (imgPos === 'right') {
-      imgX = contentX + contentW - imgBoxSize;
-      imgY = currentY + 20;
-      textAreaX = contentX;
-      textAreaW = contentW - imgBoxSize - 40;
-    }
-
-    // Render Image in assigned position
-    renderImageShape(ctx, loadedImg!, imgX, imgY, imgBoxSize, imgBoxSize, data.imageShape, data.accentColor);
-  }
-
-  // 5. Draw Decorative Quote Marks (if enabled)
-  if (data.showQuotes) {
+  // If Full Background Image Mode:
+  if (hasImg && imgPos === 'full') {
     ctx.save();
-    ctx.fillStyle = data.accentColor || '#EA580C';
-    ctx.globalAlpha = 0.25;
-    ctx.font = '700 80px "Georgia", serif';
-    const quoteSymbolX = data.textAlign === 'center' ? textAreaX + textAreaW / 2 - 30 : textAreaX;
-    ctx.fillText('“', quoteSymbolX, textAreaY + 40);
-    ctx.restore();
-    textAreaY += 24;
-  }
-
-  // 6. Draw Main Motivational Text
-  ctx.save();
-  ctx.fillStyle = data.textColor;
-
-  let fontSizePx = 42;
-  if (data.fontSize === 'small') fontSizePx = 32;
-  if (data.fontSize === 'medium') fontSizePx = 40;
-  if (data.fontSize === 'large') fontSizePx = 50;
-  if (data.fontSize === 'xlarge') fontSizePx = 62;
-
-  let fontStyle = 'normal';
-  let fontFam = '"Georgia", serif';
-  if (data.fontFamily === 'sans') fontFam = '"Inter", system-ui, sans-serif';
-  if (data.fontFamily === 'display') fontFam = '"Impact", "Trebuchet MS", sans-serif';
-  if (data.fontFamily === 'handwriting') fontFam = '"Brush Script MT", "Caveat", cursive, sans-serif';
-
-  ctx.font = `${fontStyle} 700 ${fontSizePx}px ${fontFam}`;
-  ctx.textAlign = data.textAlign;
-  ctx.textBaseline = 'top';
-
-  const lines = wrapText(ctx, data.text || 'Write your motivational message here...', textAreaW);
-  const lineHeight = fontSizePx * 1.35;
-
-  let currentTextY = textAreaY;
-  if (data.textAlign === 'center') {
-    // Vertically center text in available height if spacious
-    const totalTextHeight = lines.length * lineHeight;
-    if (totalTextHeight < textAreaH - 100) {
-      currentTextY = textAreaY + (textAreaH - totalTextHeight) / 3;
+    const radius = data.borderRadius === 'none' ? 0 : data.borderRadius === 'small' ? 16 : data.borderRadius === 'medium' ? 32 : 48;
+    if (isCardStyle) {
+      drawRoundedRect(ctx, cardX, cardY, cardW, cardH, radius);
+      ctx.clip();
     }
+
+    const imgRatio = loadedImg!.width / loadedImg!.height;
+    const cardRatio = cardW / cardH;
+    let rW = cardW;
+    let rH = cardH;
+    let oX = 0;
+    let oY = 0;
+
+    if (data.imageFit === 'contain') {
+      if (imgRatio > cardRatio) {
+        rW = cardW;
+        rH = cardW / imgRatio;
+        oY = (cardH - rH) / 2;
+      } else {
+        rH = cardH;
+        rW = cardH * imgRatio;
+        oX = (cardW - rW) / 2;
+      }
+    } else {
+      if (imgRatio > cardRatio) {
+        rH = cardH;
+        rW = cardH * imgRatio;
+        oX = -(rW - cardW) / 2;
+      } else {
+        rW = cardW;
+        rH = cardW / imgRatio;
+        oY = -(rH - cardH) / 2;
+      }
+    }
+
+    ctx.drawImage(loadedImg!, cardX + oX, cardY + oY, rW, rH);
+
+    // Overlay scrim for text contrast
+    const scrim = ctx.createLinearGradient(cardX, cardY, cardX, cardY + cardH);
+    scrim.addColorStop(0, 'rgba(0, 0, 0, 0.50)');
+    scrim.addColorStop(0.5, 'rgba(0, 0, 0, 0.65)');
+    scrim.addColorStop(1, 'rgba(0, 0, 0, 0.85)');
+    ctx.fillStyle = scrim;
+    ctx.fillRect(cardX, cardY, cardW, cardH);
+    ctx.restore();
   }
 
-  lines.forEach((line) => {
-    let printX = textAreaX;
-    if (data.textAlign === 'center') printX = textAreaX + textAreaW / 2;
-    if (data.textAlign === 'right') printX = textAreaX + textAreaW;
+  // 4. Draw Header (Top Badge on Left + Brand Tag on Right)
+  const headerY = contentY;
+  const headerHeight = 36;
 
-    ctx.fillText(line, printX, currentTextY);
-    currentTextY += lineHeight;
-  });
+  // Left: Badge
+  if (data.showBadge && data.badgeText) {
+    ctx.save();
+    ctx.font = '800 13px "Inter", system-ui, sans-serif';
+    const badgeText = data.badgeText.toUpperCase();
+    const metrics = ctx.measureText(badgeText);
+    const badgeW = metrics.width + 36;
+    const badgeH = 30;
 
-  // 7. Draw Author Name (if entered)
-  if (data.author && data.author.trim()) {
-    currentTextY += 24;
-    ctx.font = '600 22px "Inter", system-ui, sans-serif';
     ctx.fillStyle = data.accentColor || '#EA580C';
+    drawRoundedRect(ctx, contentX, headerY, badgeW, badgeH, 15);
+    ctx.fill();
 
-    const authorStr = `— ${data.author.trim()}`;
-    let authorX = textAreaX;
-    if (data.textAlign === 'center') authorX = textAreaX + textAreaW / 2;
-    if (data.textAlign === 'right') authorX = textAreaX + textAreaW;
-
-    ctx.fillText(authorStr, authorX, currentTextY);
+    // Sparkle indicator symbol
+    ctx.fillStyle = '#FFFFFF';
+    ctx.font = '700 11px "Inter", system-ui, sans-serif';
+    ctx.textAlign = 'left';
+    ctx.textBaseline = 'middle';
+    ctx.fillText('✦ ' + badgeText, contentX + 12, headerY + badgeH / 2 + 1);
+    ctx.restore();
   }
+
+  // Right: Subtle Brand Tag with <Author Name> STUDIO
+  const trimmedAuthor = data.author ? data.author.trim().toUpperCase() : '';
+  const brandTagText = trimmedAuthor
+    ? trimmedAuthor.endsWith('STUDIO')
+      ? trimmedAuthor
+      : `${trimmedAuthor} STUDIO`
+    : 'STUDIO';
+  ctx.save();
+  ctx.fillStyle = imgPos === 'full' && hasImg ? '#FFFFFF' : data.textColor;
+  ctx.globalAlpha = 0.6;
+  ctx.font = '700 12px "Inter", system-ui, sans-serif';
+  ctx.textAlign = 'right';
+  ctx.textBaseline = 'middle';
+  ctx.fillText(brandTagText, contentX + contentW, headerY + 15);
   ctx.restore();
 
-  // 8. Draw Bottom Footer (Social Media Handle + Date)
-  const footerY = cardY + cardH - pad;
+  // 5. Draw Footer Line and Metadata
+  const footerLineY = contentY + contentH - 44;
   ctx.save();
 
-  // Divider Line at bottom
-  ctx.strokeStyle = data.textColor;
-  ctx.globalAlpha = 0.15;
+  // Footer divider line
+  ctx.strokeStyle = imgPos === 'full' && hasImg ? '#FFFFFF' : data.textColor;
+  ctx.globalAlpha = 0.2;
   ctx.lineWidth = 1.5;
   ctx.beginPath();
-  ctx.moveTo(contentX, footerY - 45);
-  ctx.lineTo(contentX + contentW, footerY - 45);
+  ctx.moveTo(contentX, footerLineY);
+  ctx.lineTo(contentX + contentW, footerLineY);
   ctx.stroke();
   ctx.globalAlpha = 1.0;
 
-  // Footer Layout: Left = Social Handle + Icons, Right = Current Date
-  // Left: Social Handle
-  let socialX = contentX;
-  if (data.socialHandle) {
-    ctx.fillStyle = data.textColor;
-    ctx.font = '600 18px "Inter", system-ui, sans-serif';
-    ctx.textAlign = 'left';
-    ctx.textBaseline = 'middle';
+  const footerContentY = footerLineY + 24;
 
-    // Draw small social indicator dot / accent
-    ctx.fillStyle = data.accentColor || '#EA580C';
-    ctx.beginPath();
-    ctx.arc(socialX + 8, footerY - 18, 5, 0, Math.PI * 2);
-    ctx.fill();
+  // Footer Left: Social Handle + Dot
+  ctx.fillStyle = data.accentColor || '#EA580C';
+  ctx.beginPath();
+  ctx.arc(contentX + 6, footerContentY, 4, 0, Math.PI * 2);
+  ctx.fill();
 
-    ctx.fillStyle = data.textColor;
-    ctx.fillText(data.socialHandle, socialX + 22, footerY - 18);
-  } else {
-    // Brand signature default
-    ctx.fillStyle = data.textColor;
-    ctx.globalAlpha = 0.7;
-    ctx.font = '600 16px "Inter", system-ui, sans-serif';
-    ctx.textAlign = 'left';
-    ctx.textBaseline = 'middle';
-    ctx.fillText('INSPIRECANVAS', socialX, footerY - 18);
-    ctx.globalAlpha = 1.0;
-  }
-
-  // Right: Formatted Date
-  ctx.fillStyle = data.textColor;
-  ctx.globalAlpha = 0.8;
-  ctx.font = '700 15px "Inter", system-ui, sans-serif';
-  ctx.textAlign = 'right';
+  ctx.fillStyle = imgPos === 'full' && hasImg ? '#FFFFFF' : data.textColor;
+  ctx.font = '600 15px "Inter", system-ui, sans-serif';
+  ctx.textAlign = 'left';
   ctx.textBaseline = 'middle';
-  ctx.fillText(data.dateText, contentX + contentW, footerY - 18);
+  ctx.fillText(data.socialHandle || '@PosterStudio', contentX + 18, footerContentY);
 
+  // Footer Right: Date
+  ctx.textAlign = 'right';
+  ctx.fillText('♥ ' + (data.dateText || 'Today'), contentX + contentW, footerContentY);
   ctx.restore();
 
-  ctx.restore(); // Restore main save
+  // 6. Central Content Layout and Vertical Centering
+  const centralTopY = headerY + headerHeight + 14;
+  const centralBottomY = footerLineY - 14;
+  const centralAvailableH = centralBottomY - centralTopY;
+  const centralW = contentW;
+  const centralX = contentX;
+
+  // Image Box Dimensions
+  let imgBoxSize = 130;
+  if (imgPos === 'left' || imgPos === 'right') {
+    imgBoxSize = 200;
+  }
+
+  // Font properties
+  let fontSizePx = 44;
+  if (data.fontSize === 'small') fontSizePx = 32;
+  if (data.fontSize === 'medium') fontSizePx = 40;
+  if (data.fontSize === 'large') fontSizePx = 48;
+  if (data.fontSize === 'xlarge') fontSizePx = 58;
+
+  let fontFam = '"Playfair Display", "Georgia", serif';
+  if (data.fontFamily === 'sans') fontFam = '"Plus Jakarta Sans", "Inter", system-ui, sans-serif';
+  if (data.fontFamily === 'display') fontFam = '"Impact", "Plus Jakarta Sans", "Arial Black", sans-serif';
+  if (data.fontFamily === 'handwriting') fontFam = '"Caveat", "Brush Script MT", cursive, sans-serif';
+
+  const lineHeight = fontSizePx * 1.35;
+  const hasTextBg = Boolean(data.textBgColor && data.textBgColor !== 'transparent');
+
+  // Text Wrap & Measure
+  ctx.font = `700 ${fontSizePx}px ${fontFam}`;
+  ctx.textAlign = data.textAlign;
+  ctx.textBaseline = 'top';
+
+  const isSplitLayout = (imgPos === 'left' || imgPos === 'right') && hasImg;
+  const splitGap = 36;
+  const targetTextW = isSplitLayout ? centralW - imgBoxSize - splitGap : centralW;
+  const wrapW = hasTextBg ? targetTextW - (isSplitLayout ? 36 : 56) : targetTextW;
+
+  const quotedText = getQuotedText(data.text);
+  const lines = wrapText(ctx, quotedText, wrapW);
+  const textLinesH = lines.length * lineHeight;
+  const quoteMarkH = 0;
+  const authorH = data.author && data.author.trim() ? (fontSizePx > 40 ? 38 : 32) : 0;
+  const rawTextContentH = textLinesH + authorH;
+  const textBoxPaddingY = hasTextBg ? 22 : 0;
+  const textBoxH = rawTextContentH + textBoxPaddingY * 2;
+
+  // Determine vertical centering placement
+  const topBottomImgGap = 16;
+
+  let totalBlockH = textBoxH;
+  if (isSplitLayout) {
+    totalBlockH = Math.max(imgBoxSize, textBoxH);
+  } else if (hasImg && imgPos === 'top') {
+    totalBlockH = imgBoxSize + topBottomImgGap + textBoxH;
+  } else if (hasImg && imgPos === 'bottom') {
+    totalBlockH = textBoxH + topBottomImgGap + imgBoxSize;
+  }
+
+  const startBlockY = centralTopY + Math.max(0, (centralAvailableH - totalBlockH) / 2);
+
+  // Render Image and Text based on layout
+  if (isSplitLayout) {
+    const imgX = imgPos === 'left' ? centralX : centralX + targetTextW + splitGap;
+    const imgY = startBlockY + (totalBlockH - imgBoxSize) / 2;
+    renderImageShape(ctx, loadedImg!, imgX, imgY, imgBoxSize, imgBoxSize, data.imageShape, data.accentColor, data.imageFit);
+
+    const textX = imgPos === 'left' ? centralX + imgBoxSize + splitGap : centralX;
+    const textY = startBlockY + (totalBlockH - textBoxH) / 2;
+    renderTextBlock(ctx, data, textX, textY, targetTextW, textBoxH, hasTextBg, textBoxPaddingY, lines, lineHeight, fontSizePx, fontFam, quoteMarkH);
+  } else {
+    let currentY = startBlockY;
+
+    if (hasImg && imgPos === 'top') {
+      const imgX = centralX + (centralW - imgBoxSize) / 2;
+      renderImageShape(ctx, loadedImg!, imgX, currentY, imgBoxSize, imgBoxSize, data.imageShape, data.accentColor, data.imageFit);
+      currentY += imgBoxSize + topBottomImgGap;
+    }
+
+    // Text block
+    renderTextBlock(ctx, data, centralX, currentY, targetTextW, textBoxH, hasTextBg, textBoxPaddingY, lines, lineHeight, fontSizePx, fontFam, quoteMarkH);
+    currentY += textBoxH;
+
+    if (hasImg && imgPos === 'bottom') {
+      currentY += topBottomImgGap;
+      const imgX = centralX + (centralW - imgBoxSize) / 2;
+      renderImageShape(ctx, loadedImg!, imgX, currentY, imgBoxSize, imgBoxSize, data.imageShape, data.accentColor, data.imageFit);
+    }
+  }
+
+  ctx.restore();
   return canvas;
+}
+
+/**
+ * Helper to render the text box (background container, quote marks, text lines, author)
+ */
+function renderTextBlock(
+  ctx: CanvasRenderingContext2D,
+  data: QuoteData,
+  x: number,
+  y: number,
+  w: number,
+  h: number,
+  hasTextBg: boolean,
+  padY: number,
+  lines: string[],
+  lineHeight: number,
+  fontSizePx: number,
+  fontFam: string,
+  quoteMarkH: number
+) {
+  // Draw Background highlight container if chosen
+  if (hasTextBg) {
+    ctx.save();
+    ctx.fillStyle = data.textBgColor!;
+    drawRoundedRect(ctx, x, y, w, h, 20);
+    ctx.fill();
+    ctx.restore();
+  }
+
+  let textCursorY = y + padY;
+
+  // Draw Quote Mark
+  if (data.showQuotes && quoteMarkH > 0) {
+    ctx.save();
+    ctx.fillStyle = data.accentColor || '#EA580C';
+    ctx.globalAlpha = 0.45;
+    ctx.font = '700 48px "Georgia", serif';
+    ctx.textAlign = data.textAlign;
+    let qX = x;
+    if (data.textAlign === 'center') qX = x + w / 2;
+    if (data.textAlign === 'right') qX = x + w;
+    ctx.fillText('“', qX, textCursorY + 12);
+    ctx.restore();
+    textCursorY += quoteMarkH;
+  }
+
+  // Draw Text Lines
+  ctx.save();
+  ctx.fillStyle = data.textColor || '#0F172A';
+  ctx.font = `700 ${fontSizePx}px ${fontFam}`;
+  ctx.textAlign = data.textAlign;
+  ctx.textBaseline = 'top';
+
+  lines.forEach((line) => {
+    let lineX = x;
+    if (data.textAlign === 'center') lineX = x + w / 2;
+    if (data.textAlign === 'right') lineX = x + w;
+    ctx.fillText(line, lineX, textCursorY);
+    textCursorY += lineHeight;
+  });
+
+  // Draw Author Name
+  if (data.author && data.author.trim()) {
+    textCursorY += 12;
+    ctx.font = '600 20px "Inter", system-ui, sans-serif';
+    ctx.fillStyle = data.accentColor || '#EA580C';
+
+    const authorStr = `— ${data.author.trim()}`;
+    let authorX = x;
+    if (data.textAlign === 'center') authorX = x + w / 2;
+    if (data.textAlign === 'right') authorX = x + w;
+    ctx.fillText(authorStr, authorX, textCursorY);
+  }
+  ctx.restore();
 }
 
 /**
@@ -326,7 +437,8 @@ function renderImageShape(
   w: number,
   h: number,
   shape: string,
-  accentColor: string
+  accentColor: string,
+  imageFit?: 'cover' | 'contain'
 ) {
   ctx.save();
 
@@ -367,7 +479,7 @@ function renderImageShape(
     ctx.clip();
   }
 
-  // Draw scaled cover image
+  // Draw scaled image (contain or cover)
   const imgRatio = img.width / img.height;
   const boxRatio = w / h;
   let renderW = w;
@@ -375,14 +487,26 @@ function renderImageShape(
   let offsetX = 0;
   let offsetY = 0;
 
-  if (imgRatio > boxRatio) {
-    renderH = h;
-    renderW = h * imgRatio;
-    offsetX = -(renderW - w) / 2;
+  if (imageFit === 'contain') {
+    if (imgRatio > boxRatio) {
+      renderW = w;
+      renderH = w / imgRatio;
+      offsetY = (h - renderH) / 2;
+    } else {
+      renderH = h;
+      renderW = h * imgRatio;
+      offsetX = (w - renderW) / 2;
+    }
   } else {
-    renderW = w;
-    renderH = w / imgRatio;
-    offsetY = -(renderH - h) / 2;
+    if (imgRatio > boxRatio) {
+      renderH = h;
+      renderW = h * imgRatio;
+      offsetX = -(renderW - w) / 2;
+    } else {
+      renderW = w;
+      renderH = w / imgRatio;
+      offsetY = -(renderH - h) / 2;
+    }
   }
 
   ctx.drawImage(img, x + offsetX, y + offsetY, renderW, renderH);
@@ -414,28 +538,37 @@ function drawRoundedRect(
 }
 
 /**
- * Helper to split text into lines based on canvas width
+ * Helper to split text into lines based on canvas width, respecting explicit newlines (\n)
  */
 function wrapText(ctx: CanvasRenderingContext2D, text: string, maxWidth: number): string[] {
-  const words = text.split(/\s+/);
+  if (!text) return [''];
+  const paragraphs = text.split('\n');
   const lines: string[] = [];
-  let currentLine = '';
 
-  for (let i = 0; i < words.length; i++) {
-    const word = words[i];
-    const testLine = currentLine ? `${currentLine} ${word}` : word;
-    const metrics = ctx.measureText(testLine);
-
-    if (metrics.width > maxWidth && currentLine) {
-      lines.push(currentLine);
-      currentLine = word;
-    } else {
-      currentLine = testLine;
+  for (const paragraph of paragraphs) {
+    if (paragraph.trim() === '') {
+      lines.push('');
+      continue;
     }
-  }
+    const words = paragraph.split(/\s+/);
+    let currentLine = '';
 
-  if (currentLine) {
-    lines.push(currentLine);
+    for (let i = 0; i < words.length; i++) {
+      const word = words[i];
+      if (!word) continue;
+      const testLine = currentLine ? `${currentLine} ${word}` : word;
+      const metrics = ctx.measureText(testLine);
+
+      if (metrics.width > maxWidth && currentLine) {
+        lines.push(currentLine);
+        currentLine = word;
+      } else {
+        currentLine = testLine;
+      }
+    }
+    if (currentLine) {
+      lines.push(currentLine);
+    }
   }
 
   return lines.length > 0 ? lines : [text];

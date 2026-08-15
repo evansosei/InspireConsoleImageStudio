@@ -1,9 +1,10 @@
-export type ImagePosition = 'left' | 'right' | 'top' | 'bottom';
+export type ImagePosition = 'left' | 'right' | 'top' | 'bottom' | 'full';
+export type ImageFit = 'cover' | 'contain';
 export type TextAlign = 'left' | 'center' | 'right';
 export type FontSize = 'small' | 'medium' | 'large' | 'xlarge';
 export type FontFamily = 'serif' | 'sans' | 'display' | 'handwriting';
 export type BorderRadius = 'none' | 'small' | 'medium' | 'large' | 'full';
-export type ImageShape = 'circle' | 'rounded' | 'square' | 'oval';
+export type ImageShape = 'circle' | 'rounded' | 'square' | 'oval' | 'full';
 export type CardStyle = 'modern-split' | 'reference-inspired' | 'classic-card' | 'minimalist' | 'dark-luxury' | 'vibrant-accent';
 export type AspectRatio = '1:1' | '4:5' | '9:16';
 
@@ -14,8 +15,10 @@ export interface QuoteData {
   dateText: string;
   imageUri: string | null;
   imagePosition: ImagePosition;
+  imageFit?: ImageFit;
   bgColor: string;
   textColor: string;
+  textBgColor?: string;
   accentColor: string;
   textAlign: TextAlign;
   fontSize: FontSize;

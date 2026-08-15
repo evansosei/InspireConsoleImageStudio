@@ -14,13 +14,14 @@ export default function App() {
   // Initialize default state with reference template data & current date
   const defaultQuoteData: QuoteData = {
     text: "When you are an original and walk in God's plan, you shine like a star in the firmament.",
-    author: "Sir Evans",
-    socialHandle: "@SirEvans",
+    author: "Poster Studio",
+    socialHandle: "@PosterStudio",
     dateText: getFormattedCurrentDate(),
     imageUri: defaultPortrait,
     imagePosition: 'top',
     bgColor: '#FEF08A',
     textColor: '#0F172A',
+    textBgColor: 'transparent',
     accentColor: '#EA580C',
     textAlign: 'center',
     fontSize: 'large',
@@ -93,7 +94,7 @@ export default function App() {
       />
 
       {/* Main Workspace Dashboard */}
-      <main className="flex-1 max-w-7xl w-full mx-auto p-3 sm:p-6 lg:p-8 relative z-10 pb-20 lg:pb-8">
+      <main className="flex-1 max-w-7xl w-full mx-auto p-3 sm:p-6 lg:p-8 relative z-10 pb-8">
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-5 sm:gap-6 lg:gap-8 items-start">
           {/* Left Column: Design Controls Panel */}
           <div className="lg:col-span-6 space-y-4 sm:space-y-6">
@@ -101,7 +102,7 @@ export default function App() {
               <div>
                 <h2 className="text-base sm:text-lg font-bold text-slate-800 flex items-center gap-2">
                   <Sparkles className="w-4 h-4 sm:w-5 sm:h-5 text-orange-600" />
-                  <span>Design Studio Controls</span>
+                  <span>Osei Kwaku Design Studio Controls</span>
                 </h2>
                 <p className="text-xs text-slate-500 font-medium">
                   Customize image, text, position, colors, and author metadata in real-time
@@ -184,17 +185,6 @@ export default function App() {
         </div>
       </main>
 
-      {/* Mobile Sticky Floating Action Bar */}
-      <div className="lg:hidden fixed bottom-0 left-0 right-0 z-40 p-3 bg-white/90 backdrop-blur-xl border-t border-slate-200/80 shadow-2xl flex items-center gap-2">
-        <button
-          onClick={handleOpenFinalCanvas}
-          className="flex-1 py-3 px-4 bg-slate-900 text-white font-bold text-xs rounded-xl shadow-md flex items-center justify-center gap-2 active:scale-95 transition-all"
-        >
-          <Eye className="w-4 h-4 text-orange-400" />
-          <span>Preview Full Canvas</span>
-        </button>
-      </div>
-
       {/* Separate Final Canvas Modal */}
       <FinalCanvasModal
         isOpen={isFinalCanvasOpen}
@@ -211,8 +201,10 @@ export default function App() {
       />
 
       {/* Footer */}
-      <footer className="py-6 border-t border-slate-200/60 text-center text-xs text-slate-500 font-medium relative z-10 backdrop-blur-sm bg-white/20">
-        <p>InspireCanvas • Made by <span className="font-bold text-slate-800">Evans Osei Kwaku</span></p>
+      <footer className="py-6 border-t border-slate-200/60 text-center text-xs text-slate-500 font-medium relative z-10 backdrop-blur-sm bg-white/30">
+        <p className="tracking-wide">
+          Made by <span className="font-bold text-slate-800">Evans Osei Kwaku</span>
+        </p>
       </footer>
     </div>
   );
