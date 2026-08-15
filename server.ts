@@ -12,7 +12,7 @@ const PORT = 3000;
 app.use(express.json({ limit: "10mb" }));
 
 // Initialize Gemini Client
-const apiKey = process.env.GEMINI_API_KEY;
+const apiKey = process.env.GEMINI_API_KEY || process.env.VITE_GEMINI_API_KEY || process.env.API_KEY;
 let ai: GoogleGenAI | null = null;
 if (apiKey) {
   ai = new GoogleGenAI({
@@ -30,8 +30,9 @@ app.post("/api/generate-quote", async (req, res) => {
   try {
     const { theme, authorPreference } = req.body || {};
     const selectedTheme = theme || "General Motivation";
+    const currentKey = process.env.GEMINI_API_KEY || process.env.VITE_GEMINI_API_KEY || process.env.API_KEY;
 
-    if (!process.env.GEMINI_API_KEY) {
+    if (!currentKey) {
       // Fallback motivational quotes if key is not configured yet
       const fallbackQuotes = [
         "When you are an original and walk in your purpose, you shine like a star in the firmament.",
@@ -49,7 +50,7 @@ app.post("/api/generate-quote", async (req, res) => {
 
     if (!ai) {
       ai = new GoogleGenAI({
-        apiKey: process.env.GEMINI_API_KEY,
+        apiKey: currentKey,
         httpOptions: {
           headers: {
             "User-Agent": "aistudio-build",

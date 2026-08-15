@@ -21,6 +21,7 @@ import {
 } from 'lucide-react';
 import { QuoteData, ImagePosition, TextAlign, FontSize, FontFamily, BorderRadius, ImageShape, CardStyle } from '../types';
 import { COLOR_PRESETS, TEXT_COLOR_PRESETS, TEXT_BG_PRESETS, MOTIVATION_THEMES } from '../data/presets';
+import { fetchAiQuote } from '../utils/aiQuoteService';
 
 interface ControlsPanelProps {
   data: QuoteData;
@@ -64,14 +65,9 @@ export const ControlsPanel: React.FC<ControlsPanelProps> = ({
     setIsGenerating(true);
     setAiError(null);
     try {
-      const res = await fetch('/api/generate-quote', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ theme: selectedTheme, authorPreference: data.author })
-      });
-      const resData = await res.json();
-      if (resData && resData.quote) {
-        onChange({ text: resData.quote });
+      const generatedQuote = await fetchAiQuote(selectedTheme, data.author);
+      if (generatedQuote) {
+        onChange({ text: generatedQuote });
       } else {
         setAiError('Failed to generate quote. Try again!');
       }
