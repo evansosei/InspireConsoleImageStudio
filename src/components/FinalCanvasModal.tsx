@@ -127,21 +127,21 @@ export const FinalCanvasModal: React.FC<FinalCanvasModalProps> = ({
   };
 
   return (
-    <div className={`fixed inset-0 z-50 bg-slate-950/80 backdrop-blur-md flex items-center justify-center p-2 sm:p-4 overflow-hidden transition-all`}>
-      <div className={`bg-white/95 backdrop-blur-xl border border-slate-200 rounded-3xl w-full flex flex-col overflow-hidden shadow-2xl transition-all ${
-        isFullScreen ? 'max-w-full h-full rounded-none' : 'max-w-5xl max-h-[95vh] rounded-3xl'
+    <div className="fixed inset-0 z-50 bg-slate-950/80 backdrop-blur-md flex items-center justify-center p-2 sm:p-4 overflow-hidden transition-all">
+      <div className={`bg-white/95 backdrop-blur-xl border border-slate-200 w-full flex flex-col overflow-hidden shadow-2xl transition-all ${
+        isFullScreen ? 'max-w-full h-full rounded-none' : 'max-w-5xl h-[92vh] max-h-[92vh] sm:h-[88vh] sm:max-h-[88vh] rounded-3xl'
       } text-slate-900`}>
         {/* Modal Header */}
-        <div className="p-3.5 sm:p-5 border-b border-slate-200/80 flex items-center justify-between bg-white/90 gap-2">
+        <div className="p-3 sm:p-4 border-b border-slate-200/80 flex items-center justify-between bg-white/90 gap-2 shrink-0">
           <div className="flex items-center gap-2.5 min-w-0">
             <div className="w-8 h-8 sm:w-9 sm:h-9 rounded-xl bg-orange-100 text-orange-600 flex items-center justify-center font-bold shrink-0">
               <Sparkles className="w-4 h-4 sm:w-5 sm:h-5" />
             </div>
             <div className="min-w-0">
-              <h2 className="text-base sm:text-lg font-bold text-slate-900 truncate">
+              <h2 className="text-sm sm:text-base font-bold text-slate-900 truncate">
                 Full View Preview & Export
               </h2>
-              <p className="text-[11px] sm:text-xs text-slate-500 font-medium truncate">
+              <p className="text-[10px] sm:text-xs text-slate-500 font-medium truncate">
                 {width} × {height}px High-Resolution Graphic • Ready for Social Media
               </p>
             </div>
@@ -218,7 +218,7 @@ export const FinalCanvasModal: React.FC<FinalCanvasModalProps> = ({
         </div>
 
         {/* Modal Body / Full Canvas & Image Render Container */}
-        <div className="flex-1 p-2 sm:p-6 overflow-auto flex flex-col items-center justify-center bg-slate-900/90 relative min-h-[360px]">
+        <div className={`flex-1 p-2 sm:p-4 ${zoomScale > 1 ? 'overflow-auto' : 'overflow-hidden'} flex items-center justify-center bg-slate-900/95 relative min-h-0`}>
           {isRendering && (
             <div className="flex flex-col items-center gap-3 text-orange-400 py-12">
               <RefreshCw className="w-8 h-8 animate-spin" />
@@ -228,23 +228,21 @@ export const FinalCanvasModal: React.FC<FinalCanvasModalProps> = ({
             </div>
           )}
 
-          {/* VIEW MODE: FINAL HIGH-RES CANVAS FULL VIEW */}
+          {/* VIEW MODE: FINAL HIGH-RES CANVAS FULL VIEW - FULLY CONTAINED */}
           {viewMode === 'canvas' && (
             <div
-              className={`transition-transform duration-200 flex items-center justify-center ${
-                isRendering ? 'hidden' : 'block'
+              className={`w-full h-full flex items-center justify-center min-h-0 ${
+                isRendering ? 'hidden' : 'flex'
               }`}
               style={{
-                transform: `scale(${zoomScale})`,
+                transform: zoomScale !== 1 ? `scale(${zoomScale})` : undefined,
                 transformOrigin: 'center center'
               }}
             >
               <canvas
                 ref={canvasRef}
-                className={`max-w-full ${
-                  isFullScreen ? 'max-h-[78vh]' : 'max-h-[64vh]'
-                } object-contain rounded-2xl shadow-2xl border border-slate-700/50 bg-slate-950`}
-                style={{ width: 'auto', height: 'auto' }}
+                className="max-w-full max-h-full object-contain rounded-xl sm:rounded-2xl shadow-2xl shadow-black/80 ring-1 ring-white/20 backdrop-blur-xl bg-slate-950"
+                style={{ width: 'auto', height: 'auto', maxWidth: '100%', maxHeight: '100%' }}
               />
             </div>
           )}
@@ -252,34 +250,33 @@ export const FinalCanvasModal: React.FC<FinalCanvasModalProps> = ({
           {/* VIEW MODE: FULL SOURCE PHOTO VIEW */}
           {viewMode === 'sourceImage' && data.imageUri && (
             <div
-              className="transition-transform duration-200 flex flex-col items-center justify-center p-2"
+              className="w-full h-full flex flex-col items-center justify-center p-2 min-h-0"
               style={{
-                transform: `scale(${zoomScale})`,
+                transform: zoomScale !== 1 ? `scale(${zoomScale})` : undefined,
                 transformOrigin: 'center center'
               }}
             >
               <img
                 src={data.imageUri}
                 alt="Source Full View"
-                className={`max-w-full ${
-                  isFullScreen ? 'max-h-[76vh]' : 'max-h-[62vh]'
-                } object-contain rounded-2xl shadow-2xl border border-slate-700/50`}
+                className="max-w-full max-h-full object-contain rounded-xl shadow-2xl border border-slate-700/50"
+                style={{ maxHeight: 'calc(100% - 24px)' }}
               />
-              <p className="text-xs font-semibold text-slate-400 mt-2">
+              <p className="text-[11px] font-semibold text-slate-400 mt-1">
                 Full Uncropped Source Image
               </p>
             </div>
           )}
 
           {shareError && (
-            <p className="text-xs text-orange-700 bg-orange-50 border border-orange-200 px-3 py-1.5 rounded-lg mt-3 font-medium">
+            <p className="absolute bottom-4 left-1/2 -translate-x-1/2 text-xs text-orange-700 bg-orange-50 border border-orange-200 px-3 py-1.5 rounded-lg font-medium shadow-md">
               {shareError}
             </p>
           )}
         </div>
 
         {/* Modal Action Footer */}
-        <div className="p-3.5 sm:p-5 border-t border-slate-200/80 bg-white/95 flex flex-col sm:flex-row items-center justify-between gap-3">
+        <div className="p-3 sm:p-4 border-t border-slate-200/80 bg-white/95 flex flex-col sm:flex-row items-center justify-between gap-2.5 shrink-0">
           <div className="flex items-center gap-2 w-full sm:w-auto">
             <button
               onClick={onClose}

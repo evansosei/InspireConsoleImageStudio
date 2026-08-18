@@ -4,12 +4,12 @@ import { getQuotedText } from './textUtils';
 export function getCanvasDimensions(aspectRatio: '1:1' | '4:5' | '9:16' = '1:1') {
   switch (aspectRatio) {
     case '4:5':
-      return { width: 1080, height: 1350 };
+      return { width: 1200, height: 1500 };
     case '9:16':
       return { width: 1080, height: 1920 };
     case '1:1':
     default:
-      return { width: 1080, height: 1080 };
+      return { width: 1200, height: 1200 };
   }
 }
 
@@ -90,16 +90,32 @@ export async function renderQuoteCanvas(
     cardW = width - marginX * 2;
     cardH = height - marginY * 2;
 
-    // Draw Inner Card Background with border radius & soft shadow
-    ctx.save();
-    ctx.shadowColor = 'rgba(0, 0, 0, 0.35)';
-    ctx.shadowBlur = 32;
-    ctx.shadowOffsetY = 16;
-
-    ctx.fillStyle = data.bgColor;
     const radius = data.borderRadius === 'none' ? 0 : data.borderRadius === 'small' ? 16 : data.borderRadius === 'medium' ? 32 : 48;
+
+    // Draw Multi-layer Realistic Box Shadow for Floating Card
+    ctx.save();
+    // Layer 1: Ambient soft shadow
+    ctx.shadowColor = 'rgba(0, 0, 0, 0.28)';
+    ctx.shadowBlur = 48;
+    ctx.shadowOffsetY = 24;
+    ctx.fillStyle = data.bgColor;
     drawRoundedRect(ctx, cardX, cardY, cardW, cardH, radius);
     ctx.fill();
+
+    // Layer 2: Direct contact shadow
+    ctx.shadowColor = 'rgba(0, 0, 0, 0.18)';
+    ctx.shadowBlur = 18;
+    ctx.shadowOffsetY = 8;
+    drawRoundedRect(ctx, cardX, cardY, cardW, cardH, radius);
+    ctx.fill();
+    ctx.restore();
+
+    // Subtle Glassmorphism Top Specular Highlight on Card
+    ctx.save();
+    ctx.strokeStyle = 'rgba(255, 255, 255, 0.22)';
+    ctx.lineWidth = 2;
+    drawRoundedRect(ctx, cardX + 1, cardY + 1, cardW - 2, cardH - 2, Math.max(0, radius - 1));
+    ctx.stroke();
     ctx.restore();
   }
 
@@ -113,8 +129,8 @@ export async function renderQuoteCanvas(
     ctx.restore();
   }
 
-  // Card Content Area Padding (matches live preview p-5 md:p-6 relative scale)
-  const pad = 54;
+  // Card Content Area Padding (proportioned for high-impact content fill and balanced frame)
+  const pad = 46;
   const contentX = cardX + pad;
   const contentY = cardY + pad;
   const contentW = cardW - pad * 2;
@@ -142,7 +158,9 @@ export async function renderQuoteCanvas(
       ctx.clip();
     }
 
-    const imgRatio = loadedImg!.width / loadedImg!.height;
+    const imgW = loadedImg!.naturalWidth || loadedImg!.width;
+    const imgH = loadedImg!.naturalHeight || loadedImg!.height;
+    const imgRatio = imgW / imgH;
     const cardRatio = cardW / cardH;
     let rW = cardW;
     let rH = cardH;
@@ -160,13 +178,16 @@ export async function renderQuoteCanvas(
         oX = (cardW - rW) / 2;
       }
     } else {
+      // Default to Object-fit: COVER
       if (imgRatio > cardRatio) {
         rH = cardH;
         rW = cardH * imgRatio;
         oX = -(rW - cardW) / 2;
+        oY = 0;
       } else {
         rW = cardW;
         rH = cardW / imgRatio;
+        oX = 0;
         oY = -(rH - cardH) / 2;
       }
     }
@@ -183,26 +204,26 @@ export async function renderQuoteCanvas(
     ctx.restore();
   }
 
-  // 4. Draw Header (Top Badge on Left + Brand Tag on Right)
-  const headerY = contentY;
+  // 4. Draw Header (Top Badge on Left + Brand Tag on Right) - Tight, clean margin
+  const headerY = contentY + 2;
   const headerHeight = 36;
 
   // Left: Badge
   if (data.showBadge && data.badgeText) {
     ctx.save();
-    ctx.font = '800 13px "Inter", system-ui, sans-serif';
+    ctx.font = '800 17px "Inter", system-ui, sans-serif';
     const badgeText = data.badgeText.toUpperCase();
     const metrics = ctx.measureText(badgeText);
     const badgeW = metrics.width + 36;
-    const badgeH = 30;
+    const badgeH = 34;
 
     ctx.fillStyle = data.accentColor || '#EA580C';
-    drawRoundedRect(ctx, contentX, headerY, badgeW, badgeH, 15);
+    drawRoundedRect(ctx, contentX, headerY, badgeW, badgeH, 17);
     ctx.fill();
 
     // Sparkle indicator symbol
     ctx.fillStyle = '#FFFFFF';
-    ctx.font = '700 11px "Inter", system-ui, sans-serif';
+    ctx.font = '700 15px "Inter", system-ui, sans-serif';
     ctx.textAlign = 'left';
     ctx.textBaseline = 'middle';
     ctx.fillText('✦ ' + badgeText, contentX + 12, headerY + badgeH / 2 + 1);
@@ -218,20 +239,20 @@ export async function renderQuoteCanvas(
     : 'STUDIO';
   ctx.save();
   ctx.fillStyle = imgPos === 'full' && hasImg ? '#FFFFFF' : data.textColor;
-  ctx.globalAlpha = 0.6;
-  ctx.font = '700 12px "Inter", system-ui, sans-serif';
+  ctx.globalAlpha = 0.75;
+  ctx.font = '800 17px "Inter", system-ui, sans-serif';
   ctx.textAlign = 'right';
   ctx.textBaseline = 'middle';
-  ctx.fillText(brandTagText, contentX + contentW, headerY + 15);
+  ctx.fillText(brandTagText, contentX + contentW, headerY + 17);
   ctx.restore();
 
-  // 5. Draw Footer Line and Metadata
-  const footerLineY = contentY + contentH - 44;
+  // 5. Draw Footer Line and Metadata - Tightly integrated
+  const footerLineY = contentY + contentH - 42;
   ctx.save();
 
   // Footer divider line
   ctx.strokeStyle = imgPos === 'full' && hasImg ? '#FFFFFF' : data.textColor;
-  ctx.globalAlpha = 0.2;
+  ctx.globalAlpha = 0.22;
   ctx.lineWidth = 1.5;
   ctx.beginPath();
   ctx.moveTo(contentX, footerLineY);
@@ -239,37 +260,32 @@ export async function renderQuoteCanvas(
   ctx.stroke();
   ctx.globalAlpha = 1.0;
 
-  const footerContentY = footerLineY + 24;
+  const footerContentY = footerLineY + 22;
 
   // Footer Left: Social Handle + Dot
   ctx.fillStyle = data.accentColor || '#EA580C';
   ctx.beginPath();
-  ctx.arc(contentX + 6, footerContentY, 4, 0, Math.PI * 2);
+  ctx.arc(contentX + 7, footerContentY, 5, 0, Math.PI * 2);
   ctx.fill();
 
   ctx.fillStyle = imgPos === 'full' && hasImg ? '#FFFFFF' : data.textColor;
-  ctx.font = '600 15px "Inter", system-ui, sans-serif';
+  ctx.font = '700 19px "Inter", system-ui, sans-serif';
   ctx.textAlign = 'left';
   ctx.textBaseline = 'middle';
-  ctx.fillText(data.socialHandle || '@PosterStudio', contentX + 18, footerContentY);
+  ctx.fillText(data.socialHandle || '@PosterStudio', contentX + 20, footerContentY);
 
   // Footer Right: Date
+  ctx.font = '700 19px "Inter", system-ui, sans-serif';
   ctx.textAlign = 'right';
   ctx.fillText('♥ ' + (data.dateText || 'Today'), contentX + contentW, footerContentY);
   ctx.restore();
 
-  // 6. Central Content Layout and Vertical Centering
-  const centralTopY = headerY + headerHeight + 14;
-  const centralBottomY = footerLineY - 14;
+  // 6. Central Content Layout - Fully occupying the space between header and footer
+  const centralTopY = headerY + headerHeight + 8;
+  const centralBottomY = footerLineY - 8;
   const centralAvailableH = centralBottomY - centralTopY;
   const centralW = contentW;
   const centralX = contentX;
-
-  // Image Box Dimensions
-  let imgBoxSize = 130;
-  if (imgPos === 'left' || imgPos === 'right') {
-    imgBoxSize = 200;
-  }
 
   // Font properties
   let fontSizePx = 44;
@@ -283,77 +299,116 @@ export async function renderQuoteCanvas(
   if (data.fontFamily === 'display') fontFam = '"Impact", "Plus Jakarta Sans", "Arial Black", sans-serif';
   if (data.fontFamily === 'handwriting') fontFam = '"Caveat", "Brush Script MT", cursive, sans-serif';
 
-  const lineHeight = fontSizePx * 1.35;
   const hasTextBg = Boolean(data.textBgColor && data.textBgColor !== 'transparent');
-
-  // Text Wrap & Measure
-  ctx.font = `700 ${fontSizePx}px ${fontFam}`;
-  ctx.textAlign = data.textAlign;
-  ctx.textBaseline = 'top';
-
   const isSplitLayout = (imgPos === 'left' || imgPos === 'right') && hasImg;
-  const splitGap = 36;
-  const targetTextW = isSplitLayout ? centralW - imgBoxSize - splitGap : centralW;
-  const wrapW = hasTextBg ? targetTextW - (isSplitLayout ? 36 : 56) : targetTextW;
-
-  const quotedText = getQuotedText(data.text);
-  const lines = wrapText(ctx, quotedText, wrapW);
-  const textLinesH = lines.length * lineHeight;
+  const splitGap = 24;
+  const topBottomImgGap = 12;
+  const padX = 24;
+  const padY = 16;
   const quoteMarkH = 0;
-  const authorH = data.author && data.author.trim() ? (fontSizePx > 40 ? 38 : 32) : 0;
-  const rawTextContentH = textLinesH + authorH;
-  const textBoxPaddingY = hasTextBg ? 22 : 0;
-  const textBoxH = rawTextContentH + textBoxPaddingY * 2;
+  const quotedText = getQuotedText(data.text);
 
-  // Determine vertical centering placement
-  const topBottomImgGap = 16;
+  let imgBoxSize = 0;
+  let targetTextW = centralW;
+  let targetTextH = centralAvailableH;
+  let textX = centralX;
+  let textY = centralTopY;
+  let imgX = 0;
+  let imgY = 0;
 
-  let totalBlockH = textBoxH;
   if (isSplitLayout) {
-    totalBlockH = Math.max(imgBoxSize, textBoxH);
+    // Image and Text side-by-side filling the full height
+    imgBoxSize = Math.min(centralAvailableH, Math.round(centralW * 0.42));
+    targetTextW = centralW - imgBoxSize - splitGap;
+    targetTextH = centralAvailableH;
+    textY = centralTopY;
+    imgY = centralTopY + (centralAvailableH - imgBoxSize) / 2;
+
+    if (imgPos === 'left') {
+      imgX = centralX;
+      textX = centralX + imgBoxSize + splitGap;
+    } else {
+      textX = centralX;
+      imgX = centralX + targetTextW + splitGap;
+    }
   } else if (hasImg && imgPos === 'top') {
-    totalBlockH = imgBoxSize + topBottomImgGap + textBoxH;
+    imgBoxSize = Math.min(270, Math.round(centralAvailableH * 0.38));
+    imgX = centralX + (centralW - imgBoxSize) / 2;
+    imgY = centralTopY;
+    targetTextW = centralW;
+    targetTextH = centralAvailableH - imgBoxSize - topBottomImgGap;
+    textX = centralX;
+    textY = centralTopY + imgBoxSize + topBottomImgGap;
   } else if (hasImg && imgPos === 'bottom') {
-    totalBlockH = textBoxH + topBottomImgGap + imgBoxSize;
-  }
-
-  const startBlockY = centralTopY + Math.max(0, (centralAvailableH - totalBlockH) / 2);
-
-  // Render Image and Text based on layout
-  if (isSplitLayout) {
-    const imgX = imgPos === 'left' ? centralX : centralX + targetTextW + splitGap;
-    const imgY = startBlockY + (totalBlockH - imgBoxSize) / 2;
-    renderImageShape(ctx, loadedImg!, imgX, imgY, imgBoxSize, imgBoxSize, data.imageShape, data.accentColor, data.imageFit);
-
-    const textX = imgPos === 'left' ? centralX + imgBoxSize + splitGap : centralX;
-    const textY = startBlockY + (totalBlockH - textBoxH) / 2;
-    renderTextBlock(ctx, data, textX, textY, targetTextW, textBoxH, hasTextBg, textBoxPaddingY, lines, lineHeight, fontSizePx, fontFam, quoteMarkH);
+    imgBoxSize = Math.min(270, Math.round(centralAvailableH * 0.38));
+    targetTextW = centralW;
+    targetTextH = centralAvailableH - imgBoxSize - topBottomImgGap;
+    textX = centralX;
+    textY = centralTopY;
+    imgX = centralX + (centralW - imgBoxSize) / 2;
+    imgY = centralTopY + targetTextH + topBottomImgGap;
   } else {
-    let currentY = startBlockY;
-
-    if (hasImg && imgPos === 'top') {
-      const imgX = centralX + (centralW - imgBoxSize) / 2;
-      renderImageShape(ctx, loadedImg!, imgX, currentY, imgBoxSize, imgBoxSize, data.imageShape, data.accentColor, data.imageFit);
-      currentY += imgBoxSize + topBottomImgGap;
-    }
-
-    // Text block
-    renderTextBlock(ctx, data, centralX, currentY, targetTextW, textBoxH, hasTextBg, textBoxPaddingY, lines, lineHeight, fontSizePx, fontFam, quoteMarkH);
-    currentY += textBoxH;
-
-    if (hasImg && imgPos === 'bottom') {
-      currentY += topBottomImgGap;
-      const imgX = centralX + (centralW - imgBoxSize) / 2;
-      renderImageShape(ctx, loadedImg!, imgX, currentY, imgBoxSize, imgBoxSize, data.imageShape, data.accentColor, data.imageFit);
-    }
+    // No image or full-canvas background image: Text box occupies the full central space
+    targetTextW = centralW;
+    targetTextH = centralAvailableH;
+    textX = centralX;
+    textY = centralTopY;
   }
+
+  // Wrap text and auto-scale font size if needed so text fits comfortably inside targetTextH
+  let lineHeight = fontSizePx * 1.30;
+  let wrapW = targetTextW - padX * 2;
+  let lines: string[] = [];
+  let authorFontSize = Math.max(22, Math.round(fontSizePx * 0.62));
+
+  for (let attempt = 0; attempt < 8; attempt++) {
+    lineHeight = fontSizePx * 1.30;
+    authorFontSize = Math.max(20, Math.round(fontSizePx * 0.62));
+    ctx.font = `700 ${fontSizePx}px ${fontFam}`;
+    ctx.textAlign = data.textAlign;
+    ctx.textBaseline = 'top';
+
+    lines = wrapText(ctx, quotedText, wrapW);
+    const textLinesH = lines.length * lineHeight;
+    const authorH = data.author && data.author.trim() ? authorFontSize + 14 : 0;
+    const neededContentH = textLinesH + authorH + padY * 2;
+
+    if (neededContentH <= targetTextH || fontSizePx <= 20) {
+      break;
+    }
+    fontSizePx -= 3;
+  }
+
+  // Render Image
+  if (hasImg && imgPos !== 'full' && loadedImg) {
+    renderImageShape(ctx, loadedImg, imgX, imgY, imgBoxSize, imgBoxSize, data.imageShape, data.accentColor, data.imageFit);
+  }
+
+  // Render Text Box fully occupying targetTextH and targetTextW
+  renderTextBlock(
+    ctx,
+    data,
+    textX,
+    textY,
+    targetTextW,
+    targetTextH,
+    hasTextBg,
+    padX,
+    padY,
+    lines,
+    lineHeight,
+    fontSizePx,
+    fontFam,
+    quoteMarkH,
+    authorFontSize
+  );
 
   ctx.restore();
   return canvas;
 }
 
 /**
- * Helper to render the text box (background container, quote marks, text lines, author)
+ * Helper to render the text box (background container, border with 10px radius, quote marks, text lines, author)
  */
 function renderTextBlock(
   ctx: CanvasRenderingContext2D,
@@ -363,23 +418,63 @@ function renderTextBlock(
   w: number,
   h: number,
   hasTextBg: boolean,
+  padX: number,
   padY: number,
   lines: string[],
   lineHeight: number,
   fontSizePx: number,
   fontFam: string,
-  quoteMarkH: number
+  quoteMarkH: number,
+  authorFontSize: number
 ) {
-  // Draw Background highlight container if chosen
+  // 1. Draw Outer Box Shadow for Floating Glass Container
+  ctx.save();
+  ctx.shadowColor = 'rgba(0, 0, 0, 0.18)';
+  ctx.shadowBlur = 28;
+  ctx.shadowOffsetY = 12;
+  ctx.fillStyle = hasTextBg ? data.textBgColor! : 'rgba(255, 255, 255, 0.12)';
+  drawRoundedRect(ctx, x, y, w, h, 10);
+  ctx.fill();
+  ctx.restore();
+
+  // 2. Draw Frosted Glassmorphism Background & Specular Shine
+  ctx.save();
   if (hasTextBg) {
-    ctx.save();
     ctx.fillStyle = data.textBgColor!;
-    drawRoundedRect(ctx, x, y, w, h, 20);
+    drawRoundedRect(ctx, x, y, w, h, 10);
     ctx.fill();
-    ctx.restore();
   }
 
-  let textCursorY = y + padY;
+  // Glassmorphism Specular Gradient (Frosted Glass Sheen)
+  const glassShine = ctx.createLinearGradient(x, y, x, y + h);
+  glassShine.addColorStop(0, 'rgba(255, 255, 255, 0.22)');
+  glassShine.addColorStop(0.35, 'rgba(255, 255, 255, 0.08)');
+  glassShine.addColorStop(1, 'rgba(255, 255, 255, 0.02)');
+  ctx.fillStyle = glassShine;
+  drawRoundedRect(ctx, x, y, w, h, 10);
+  ctx.fill();
+
+  // 3. Draw Crisp 10px Border-Radius Border with Glass Specular Edge
+  ctx.strokeStyle = data.accentColor || '#EA580C';
+  ctx.lineWidth = 2.5;
+  drawRoundedRect(ctx, x, y, w, h, 10);
+  ctx.stroke();
+
+  // Top Glass Highlight Edge
+  ctx.strokeStyle = 'rgba(255, 255, 255, 0.35)';
+  ctx.lineWidth = 1.5;
+  drawRoundedRect(ctx, x + 1, y + 1, w - 2, Math.min(24, h - 2), 8);
+  ctx.stroke();
+  ctx.restore();
+
+  // Vertically center text and author inside the container of height h
+  const textLinesH = lines.length * lineHeight;
+  const authorSpacing = data.author && data.author.trim() ? 10 : 0;
+  const authorBlockH = data.author && data.author.trim() ? authorFontSize + authorSpacing : 0;
+  const totalContentH = textLinesH + authorBlockH;
+
+  const innerPadY = Math.max(padY, (h - totalContentH) / 2);
+  let textCursorY = y + innerPadY;
 
   // Draw Quote Mark
   if (data.showQuotes && quoteMarkH > 0) {
@@ -388,10 +483,10 @@ function renderTextBlock(
     ctx.globalAlpha = 0.45;
     ctx.font = '700 48px "Georgia", serif';
     ctx.textAlign = data.textAlign;
-    let qX = x;
+    let qX = x + padX;
     if (data.textAlign === 'center') qX = x + w / 2;
-    if (data.textAlign === 'right') qX = x + w;
-    ctx.fillText('“', qX, textCursorY + 12);
+    if (data.textAlign === 'right') qX = x + w - padX;
+    ctx.fillText('“', qX, textCursorY + 10);
     ctx.restore();
     textCursorY += quoteMarkH;
   }
@@ -403,24 +498,27 @@ function renderTextBlock(
   ctx.textAlign = data.textAlign;
   ctx.textBaseline = 'top';
 
+  const contentInnerW = w - padX * 2;
+  const contentInnerX = x + padX;
+
   lines.forEach((line) => {
-    let lineX = x;
-    if (data.textAlign === 'center') lineX = x + w / 2;
-    if (data.textAlign === 'right') lineX = x + w;
+    let lineX = contentInnerX;
+    if (data.textAlign === 'center') lineX = contentInnerX + contentInnerW / 2;
+    if (data.textAlign === 'right') lineX = contentInnerX + contentInnerW;
     ctx.fillText(line, lineX, textCursorY);
     textCursorY += lineHeight;
   });
 
-  // Draw Author Name
+  // Draw Author Name closely connected to quote text
   if (data.author && data.author.trim()) {
-    textCursorY += 12;
-    ctx.font = '600 20px "Inter", system-ui, sans-serif';
+    textCursorY += 10;
+    ctx.font = `700 ${authorFontSize}px "Inter", system-ui, sans-serif`;
     ctx.fillStyle = data.accentColor || '#EA580C';
 
     const authorStr = `— ${data.author.trim()}`;
-    let authorX = x;
-    if (data.textAlign === 'center') authorX = x + w / 2;
-    if (data.textAlign === 'right') authorX = x + w;
+    let authorX = contentInnerX;
+    if (data.textAlign === 'center') authorX = contentInnerX + contentInnerW / 2;
+    if (data.textAlign === 'right') authorX = contentInnerX + contentInnerW;
     ctx.fillText(authorStr, authorX, textCursorY);
   }
   ctx.restore();
@@ -440,32 +538,55 @@ function renderImageShape(
   accentColor: string,
   imageFit?: 'cover' | 'contain'
 ) {
+  // 1. Draw Outer Drop Shadow for Image Container
+  ctx.save();
+  ctx.shadowColor = 'rgba(0, 0, 0, 0.28)';
+  ctx.shadowBlur = 24;
+  ctx.shadowOffsetY = 10;
+  ctx.fillStyle = '#000000';
+
+  if (shape === 'circle') {
+    ctx.beginPath();
+    ctx.arc(x + w / 2, y + h / 2, w / 2, 0, Math.PI * 2);
+    ctx.fill();
+  } else if (shape === 'rounded') {
+    drawRoundedRect(ctx, x, y, w, h, 20);
+    ctx.fill();
+  } else if (shape === 'oval') {
+    ctx.beginPath();
+    ctx.ellipse(x + w / 2, y + h / 2, w / 2, h / 2, 0, 0, Math.PI * 2);
+    ctx.fill();
+  } else {
+    ctx.fillRect(x, y, w, h);
+  }
+  ctx.restore();
+
   ctx.save();
 
-  // Draw ring/border accent around profile image
+  // 2. Draw ring/border accent around profile image
   ctx.strokeStyle = accentColor || '#EA580C';
-  ctx.lineWidth = 6;
+  ctx.lineWidth = 5;
 
   ctx.beginPath();
   if (shape === 'circle') {
     const cx = x + w / 2;
     const cy = y + h / 2;
     const r = w / 2;
-    ctx.arc(cx, cy, r + 4, 0, Math.PI * 2);
+    ctx.arc(cx, cy, r + 3, 0, Math.PI * 2);
     ctx.stroke();
 
     ctx.beginPath();
     ctx.arc(cx, cy, r, 0, Math.PI * 2);
     ctx.clip();
   } else if (shape === 'rounded') {
-    drawRoundedRect(ctx, x - 3, y - 3, w + 6, h + 6, 24);
+    drawRoundedRect(ctx, x - 2.5, y - 2.5, w + 5, h + 5, 22);
     ctx.stroke();
 
     ctx.beginPath();
     drawRoundedRect(ctx, x, y, w, h, 20);
     ctx.clip();
   } else if (shape === 'oval') {
-    ctx.ellipse(x + w / 2, y + h / 2, w / 2 + 4, h / 2 + 4, 0, 0, Math.PI * 2);
+    ctx.ellipse(x + w / 2, y + h / 2, w / 2 + 3, h / 2 + 3, 0, 0, Math.PI * 2);
     ctx.stroke();
 
     ctx.beginPath();
@@ -473,14 +594,16 @@ function renderImageShape(
     ctx.clip();
   } else {
     // Square
-    ctx.strokeRect(x - 3, y - 3, w + 6, h + 6);
+    ctx.strokeRect(x - 2.5, y - 2.5, w + 5, h + 5);
     ctx.beginPath();
     ctx.rect(x, y, w, h);
     ctx.clip();
   }
 
-  // Draw scaled image (contain or cover)
-  const imgRatio = img.width / img.height;
+  // Draw scaled image (object-fit: cover or contain)
+  const imgW = img.naturalWidth || img.width;
+  const imgH = img.naturalHeight || img.height;
+  const imgRatio = imgW / imgH;
   const boxRatio = w / h;
   let renderW = w;
   let renderH = h;
@@ -498,13 +621,16 @@ function renderImageShape(
       offsetX = (w - renderW) / 2;
     }
   } else {
+    // Default: Object-Fit COVER (fills entire frame, zero letterbox)
     if (imgRatio > boxRatio) {
       renderH = h;
       renderW = h * imgRatio;
       offsetX = -(renderW - w) / 2;
+      offsetY = 0;
     } else {
       renderW = w;
       renderH = w / imgRatio;
+      offsetX = 0;
       offsetY = -(renderH - h) / 2;
     }
   }

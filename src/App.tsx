@@ -19,6 +19,7 @@ export default function App() {
     dateText: getFormattedCurrentDate(),
     imageUri: defaultPortrait,
     imagePosition: 'top',
+    imageFit: 'cover',
     bgColor: '#FEF08A',
     textColor: '#0F172A',
     textBgColor: 'transparent',

@@ -65,13 +65,13 @@ export const LivePreviewCard: React.FC<LivePreviewCardProps> = ({
   // Image fit class
   const objectFitClass = data.imageFit === 'contain' ? 'object-contain bg-slate-900/10' : 'object-cover';
 
-  // Dynamic aspect ratio wrapper styles
+  // Dynamic aspect ratio wrapper styles (enlarged for clearer, bolder presentation)
   const aspectClass =
     data.aspectRatio === '4:5'
-      ? 'aspect-[4/5] max-w-[440px]'
+      ? 'aspect-[4/5] max-w-[520px]'
       : data.aspectRatio === '9:16'
-      ? 'aspect-[9/16] max-w-[340px]'
-      : 'aspect-square max-w-[540px]';
+      ? 'aspect-[9/16] max-w-[420px]'
+      : 'aspect-square max-w-[620px]';
 
   const isFullImage = data.imagePosition === 'full' && !!data.imageUri;
 
@@ -90,7 +90,7 @@ export const LivePreviewCard: React.FC<LivePreviewCardProps> = ({
       >
         {/* Main Card Element */}
         <div
-          className={`w-full h-full flex flex-col justify-between p-3.5 sm:p-5 md:p-6 transition-all duration-300 shadow-xl relative overflow-hidden ${
+          className={`w-full h-full flex flex-col justify-between p-3 sm:p-4 md:p-5 transition-all duration-300 shadow-xl relative overflow-hidden ${
             isCardStyle ? radiusClass : 'rounded-xl sm:rounded-2xl'
           }`}
           style={{
@@ -113,21 +113,21 @@ export const LivePreviewCard: React.FC<LivePreviewCardProps> = ({
           )}
 
           {/* Top Badge (Optional) */}
-          <div className="flex items-center justify-between w-full mb-1.5 sm:mb-2 relative z-10 shrink-0">
+          <div className="flex items-center justify-between w-full mb-1 relative z-10 shrink-0">
             {data.showBadge && data.badgeText ? (
               <div
-                className="px-2.5 sm:px-3.5 py-0.5 sm:py-1 text-[10px] sm:text-[11px] font-extrabold uppercase tracking-widest rounded-full text-white shadow-sm flex items-center gap-1"
+                className="px-3 sm:px-3.5 py-1 text-xs sm:text-sm font-extrabold uppercase tracking-widest rounded-full text-white shadow-sm flex items-center gap-1.5"
                 style={{ backgroundColor: data.accentColor }}
               >
-                <Sparkles className="w-2.5 h-2.5 sm:w-3 sm:h-3" />
-                <span className="truncate max-w-[120px] sm:max-w-none">{data.badgeText}</span>
+                <Sparkles className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
+                <span className="truncate max-w-[140px] sm:max-w-none">{data.badgeText}</span>
               </div>
             ) : (
               <div />
             )}
 
             {/* Subtle Brand Tag */}
-            <span className="text-[9px] sm:text-[10px] font-extrabold uppercase tracking-wider opacity-60 truncate max-w-[160px] sm:max-w-none text-right">
+            <span className="text-xs sm:text-sm font-extrabold uppercase tracking-wider opacity-75 truncate max-w-[180px] sm:max-w-none text-right">
               {data.author && data.author.trim()
                 ? data.author.trim().toLowerCase().endsWith('studio')
                   ? data.author.trim()
@@ -136,15 +136,15 @@ export const LivePreviewCard: React.FC<LivePreviewCardProps> = ({
             </span>
           </div>
 
-          {/* Main Content Area Layout based on imagePosition */}
+          {/* Main Content Area Layout based on imagePosition - fully occupying the spaces between header and footer */}
           <div
-            className="flex-1 flex flex-col items-center justify-center text-center w-full my-auto overflow-hidden relative z-10 gap-2 sm:gap-3"
+            className="flex-1 flex flex-col items-center justify-between text-center w-full my-auto overflow-hidden relative z-10 gap-2 sm:gap-3 py-0.5"
           >
             {/* TOP IMAGE LAYOUT */}
             {data.imagePosition === 'top' && data.imageUri && (
               <div className="flex justify-center items-center w-full shrink-0">
                 <div
-                  className={`relative p-0.5 sm:p-1 border-2 sm:border-3 shadow-md overflow-hidden w-18 h-18 sm:w-24 sm:h-24 md:w-28 md:h-28 shrink-0 ${imageShapeClass}`}
+                  className={`relative p-0.5 border-2 sm:border-3 shadow-xl shadow-black/20 ring-2 ring-white/30 backdrop-blur-sm overflow-hidden w-20 h-20 sm:w-28 sm:h-28 md:w-32 md:h-32 shrink-0 ${imageShapeClass}`}
                   style={{ borderColor: data.accentColor }}
                 >
                   <img
@@ -159,12 +159,12 @@ export const LivePreviewCard: React.FC<LivePreviewCardProps> = ({
             {/* LEFT / RIGHT SPLIT LAYOUT */}
             {(data.imagePosition === 'left' || data.imagePosition === 'right') && data.imageUri ? (
               <div
-                className={`flex items-center justify-center gap-3 sm:gap-5 w-full my-auto ${
+                className={`flex-1 h-full flex items-center justify-center gap-2.5 sm:gap-4 w-full my-auto ${
                   data.imagePosition === 'right' ? 'flex-row-reverse' : 'flex-row'
                 }`}
               >
                 <div
-                  className={`relative p-0.5 sm:p-1 border-2 sm:border-4 shadow-lg shrink-0 overflow-hidden w-20 h-20 sm:w-28 sm:h-28 ${imageShapeClass}`}
+                  className={`relative p-0.5 border-2 sm:border-3 shadow-xl shadow-black/20 ring-2 ring-white/30 backdrop-blur-sm shrink-0 overflow-hidden w-24 h-24 sm:w-32 sm:h-32 md:w-40 md:h-40 ${imageShapeClass}`}
                   style={{ borderColor: data.accentColor }}
                 >
                   <img
@@ -175,27 +175,27 @@ export const LivePreviewCard: React.FC<LivePreviewCardProps> = ({
                 </div>
 
                 <div
-                  className={`flex-1 min-w-0 flex flex-col justify-center ${textAlignClass} ${
-                    data.textBgColor && data.textBgColor !== 'transparent'
-                      ? 'p-2.5 sm:p-4 rounded-xl sm:rounded-2xl shadow-sm'
-                      : ''
-                  }`}
+                  className={`flex-1 h-full min-w-0 flex flex-col justify-center ${textAlignClass} p-2.5 sm:p-4 rounded-[10px] border-[1.5px] sm:border-2 shadow-lg shadow-black/15 backdrop-blur-md relative overflow-hidden ring-1 ring-white/20`}
                   style={{
+                    borderColor: data.accentColor || '#EA580C',
                     backgroundColor:
                       data.textBgColor && data.textBgColor !== 'transparent'
                         ? data.textBgColor
-                        : undefined
+                        : 'rgba(255, 255, 255, 0.08)'
                   }}
                 >
+                  {/* Glass specular sheen highlight */}
+                  <div className="absolute inset-x-0 top-0 h-[40%] bg-gradient-to-b from-white/20 to-transparent pointer-events-none" />
+
                   <p
-                    className={`${fontFamilyClass} ${fontSizeClass} whitespace-pre-line break-words`}
+                    className={`${fontFamilyClass} ${fontSizeClass} whitespace-pre-line break-words relative z-10`}
                     style={{ color: data.textColor }}
                   >
                     {getQuotedText(data.text)}
                   </p>
                   {data.author && (
                     <p
-                      className="mt-1 sm:mt-2 text-xs sm:text-sm font-semibold tracking-wide truncate"
+                      className="mt-1 sm:mt-2 text-sm sm:text-base md:text-lg font-bold tracking-wide truncate relative z-10"
                       style={{ color: data.accentColor }}
                     >
                       — {data.author}
@@ -206,20 +206,20 @@ export const LivePreviewCard: React.FC<LivePreviewCardProps> = ({
             ) : (
               /* TOP / BOTTOM / FULL / NO-IMAGE LAYOUT FOR TEXT */
               <div
-                className={`w-full flex flex-col items-center justify-center ${textAlignClass} ${
-                  data.textBgColor && data.textBgColor !== 'transparent'
-                    ? 'p-2.5 sm:p-4 rounded-xl sm:rounded-2xl shadow-sm'
-                    : ''
-                }`}
+                className={`w-full h-full flex-1 flex flex-col items-center justify-center ${textAlignClass} p-3 sm:p-5 rounded-[10px] border-[1.5px] sm:border-2 shadow-lg shadow-black/15 backdrop-blur-md relative overflow-hidden ring-1 ring-white/20`}
                 style={{
+                  borderColor: data.accentColor || '#EA580C',
                   backgroundColor:
                     data.textBgColor && data.textBgColor !== 'transparent'
                       ? data.textBgColor
-                      : undefined
+                      : 'rgba(255, 255, 255, 0.08)'
                 }}
               >
+                {/* Glass specular sheen highlight */}
+                <div className="absolute inset-x-0 top-0 h-[40%] bg-gradient-to-b from-white/20 to-transparent pointer-events-none" />
+
                 <p
-                  className={`${fontFamilyClass} ${fontSizeClass} whitespace-pre-line break-words`}
+                  className={`${fontFamilyClass} ${fontSizeClass} whitespace-pre-line break-words relative z-10`}
                   style={{ color: data.textColor }}
                 >
                   {getQuotedText(data.text)}
@@ -229,9 +229,9 @@ export const LivePreviewCard: React.FC<LivePreviewCardProps> = ({
                   <p
                     className={`${
                       data.imagePosition === 'top' || data.imagePosition === 'bottom'
-                        ? 'mt-1 sm:mt-1.5 text-xs sm:text-sm'
-                        : 'mt-1.5 sm:mt-2.5 text-xs sm:text-base'
-                    } font-semibold tracking-wide`}
+                        ? 'mt-1 sm:mt-1.5 text-sm sm:text-base'
+                        : 'mt-1.5 sm:mt-2.5 text-sm sm:text-lg md:text-xl'
+                    } font-bold tracking-wide relative z-10`}
                     style={{ color: data.accentColor }}
                   >
                     — {data.author}
@@ -244,7 +244,7 @@ export const LivePreviewCard: React.FC<LivePreviewCardProps> = ({
             {data.imagePosition === 'bottom' && data.imageUri && (
               <div className="flex justify-center items-center w-full shrink-0">
                 <div
-                  className={`relative p-0.5 sm:p-1 border-2 sm:border-3 shadow-md overflow-hidden w-18 h-18 sm:w-24 sm:h-24 md:w-28 md:h-28 shrink-0 ${imageShapeClass}`}
+                  className={`relative p-0.5 border-2 sm:border-3 shadow-xl shadow-black/20 ring-2 ring-white/30 backdrop-blur-sm overflow-hidden w-20 h-20 sm:w-28 sm:h-28 md:w-32 md:h-32 shrink-0 ${imageShapeClass}`}
                   style={{ borderColor: data.accentColor }}
                 >
                   <img
@@ -258,28 +258,28 @@ export const LivePreviewCard: React.FC<LivePreviewCardProps> = ({
           </div>
 
           {/* Footer Metadata Line */}
-          <div className="pt-2 sm:pt-3 border-t border-current/20 flex items-center justify-between mt-1 text-[10px] sm:text-xs font-semibold gap-1 relative z-10 shrink-0">
+          <div className="pt-2 sm:pt-2.5 border-t border-current/20 flex items-center justify-between mt-0.5 sm:mt-1 text-xs sm:text-sm font-semibold gap-1 relative z-10 shrink-0">
             {/* Social Handle */}
             <div className="flex items-center gap-1.5 min-w-0">
               <span
-                className="w-2 h-2 sm:w-2.5 sm:h-2.5 rounded-full inline-block shrink-0"
+                className="w-2.5 h-2.5 sm:w-3 sm:h-3 rounded-full inline-block shrink-0"
                 style={{ backgroundColor: data.accentColor }}
               />
               <div className="flex items-center gap-1 sm:gap-1.5 opacity-90 min-w-0">
                 {data.showSocialIcons && (
                   <div className="flex items-center gap-1 opacity-80 shrink-0">
-                    <Instagram className="w-3 h-3 sm:w-3.5 sm:h-3.5" />
-                    <Twitter className="w-3 h-3 sm:w-3.5 sm:h-3.5" />
+                    <Instagram className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
+                    <Twitter className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
                   </div>
                 )}
-                <span className="font-bold tracking-tight truncate">
+                <span className="font-bold tracking-tight truncate text-xs sm:text-sm">
                   {data.socialHandle || '@yourusername'}
                 </span>
               </div>
             </div>
 
             {/* Current Date */}
-            <div className="opacity-80 uppercase tracking-wider text-[9px] sm:text-[11px] font-bold shrink-0">
+            <div className="opacity-90 uppercase tracking-wider text-xs sm:text-sm font-bold shrink-0">
               {data.dateText}
             </div>
           </div>
