@@ -44,15 +44,33 @@ export const LivePreviewCard: React.FC<LivePreviewCardProps> = ({
       ? 'font-mono uppercase tracking-tight'
       : 'font-serif italic';
 
-  // Font size class mapping
-  const fontSizeClass =
-    data.fontSize === 'small'
-      ? 'text-base sm:text-xl leading-relaxed'
+  // Font size class mapping with responsive scaling for mobile view
+  const hasSplitLayout = (data.imagePosition === 'left' || data.imagePosition === 'right') && !!data.imageUri;
+  const hasStackedLayout = (data.imagePosition === 'top' || data.imagePosition === 'bottom') && !!data.imageUri;
+
+  const fontSizeClass = hasSplitLayout
+    ? data.fontSize === 'small'
+      ? 'text-[11px] sm:text-sm md:text-lg leading-snug sm:leading-relaxed'
       : data.fontSize === 'medium'
-      ? 'text-lg sm:text-2xl leading-relaxed'
+      ? 'text-xs sm:text-base md:text-xl leading-snug sm:leading-relaxed'
       : data.fontSize === 'large'
-      ? 'text-xl sm:text-3xl leading-snug font-semibold'
-      : 'text-2xl sm:text-4xl leading-snug font-bold';
+      ? 'text-xs sm:text-lg md:text-2xl leading-snug font-semibold'
+      : 'text-sm sm:text-xl md:text-3xl leading-snug font-bold'
+    : hasStackedLayout
+    ? data.fontSize === 'small'
+      ? 'text-xs sm:text-base md:text-lg leading-snug sm:leading-relaxed'
+      : data.fontSize === 'medium'
+      ? 'text-xs sm:text-lg md:text-2xl leading-snug sm:leading-relaxed'
+      : data.fontSize === 'large'
+      ? 'text-sm sm:text-xl md:text-3xl leading-snug font-semibold'
+      : 'text-base sm:text-2xl md:text-4xl leading-snug font-bold'
+    : data.fontSize === 'small'
+    ? 'text-xs sm:text-base md:text-xl leading-snug sm:leading-relaxed'
+    : data.fontSize === 'medium'
+    ? 'text-sm sm:text-lg md:text-2xl leading-snug sm:leading-relaxed'
+    : data.fontSize === 'large'
+    ? 'text-base sm:text-xl md:text-3xl leading-snug font-semibold'
+    : 'text-lg sm:text-2xl md:text-4xl leading-snug font-bold';
 
   // Text alignment class
   const textAlignClass =
@@ -116,18 +134,18 @@ export const LivePreviewCard: React.FC<LivePreviewCardProps> = ({
           <div className="flex items-center justify-between w-full mb-1 relative z-10 shrink-0">
             {data.showBadge && data.badgeText ? (
               <div
-                className="px-3 sm:px-3.5 py-1 text-xs sm:text-sm font-extrabold uppercase tracking-widest rounded-full text-white shadow-sm flex items-center gap-1.5"
+                className="px-2 sm:px-3.5 py-0.5 sm:py-1 text-[10px] sm:text-sm font-extrabold uppercase tracking-wider sm:tracking-widest rounded-full text-white shadow-sm flex items-center gap-1 sm:gap-1.5"
                 style={{ backgroundColor: data.accentColor }}
               >
-                <Sparkles className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
-                <span className="truncate max-w-[140px] sm:max-w-none">{data.badgeText}</span>
+                <Sparkles className="w-2.5 h-2.5 sm:w-4 sm:h-4" />
+                <span className="truncate max-w-[110px] sm:max-w-none">{data.badgeText}</span>
               </div>
             ) : (
               <div />
             )}
 
             {/* Subtle Brand Tag */}
-            <span className="text-xs sm:text-sm font-extrabold uppercase tracking-wider opacity-75 truncate max-w-[180px] sm:max-w-none text-right">
+            <span className="text-[10px] sm:text-sm font-extrabold uppercase tracking-wider opacity-75 truncate max-w-[130px] sm:max-w-none text-right">
               {data.author && data.author.trim()
                 ? data.author.trim().toLowerCase().endsWith('studio')
                   ? data.author.trim()
@@ -175,7 +193,7 @@ export const LivePreviewCard: React.FC<LivePreviewCardProps> = ({
                 </div>
 
                 <div
-                  className={`flex-1 h-full min-w-0 flex flex-col justify-center ${textAlignClass} p-2.5 sm:p-4 rounded-[10px] border-[1.5px] sm:border-2 shadow-lg shadow-black/15 backdrop-blur-md relative overflow-hidden ring-1 ring-white/20`}
+                  className={`flex-1 h-full min-w-0 flex flex-col justify-center ${textAlignClass} p-2 sm:p-4 rounded-[10px] border-[1.5px] sm:border-2 shadow-lg shadow-black/15 backdrop-blur-md relative overflow-hidden ring-1 ring-white/20`}
                   style={{
                     borderColor: data.accentColor || '#EA580C',
                     backgroundColor:
@@ -195,7 +213,7 @@ export const LivePreviewCard: React.FC<LivePreviewCardProps> = ({
                   </p>
                   {data.author && (
                     <p
-                      className="mt-1 sm:mt-2 text-sm sm:text-base md:text-lg font-bold tracking-wide truncate relative z-10"
+                      className="mt-0.5 sm:mt-2 text-[10px] sm:text-base md:text-lg font-bold tracking-wide truncate relative z-10"
                       style={{ color: data.accentColor }}
                     >
                       — {data.author}
@@ -206,7 +224,7 @@ export const LivePreviewCard: React.FC<LivePreviewCardProps> = ({
             ) : (
               /* TOP / BOTTOM / FULL / NO-IMAGE LAYOUT FOR TEXT */
               <div
-                className={`w-full h-full flex-1 flex flex-col items-center justify-center ${textAlignClass} p-3 sm:p-5 rounded-[10px] border-[1.5px] sm:border-2 shadow-lg shadow-black/15 backdrop-blur-md relative overflow-hidden ring-1 ring-white/20`}
+                className={`w-full h-full flex-1 flex flex-col items-center justify-center ${textAlignClass} p-2 sm:p-5 rounded-[10px] border-[1.5px] sm:border-2 shadow-lg shadow-black/15 backdrop-blur-md relative overflow-hidden ring-1 ring-white/20`}
                 style={{
                   borderColor: data.accentColor || '#EA580C',
                   backgroundColor:
@@ -229,8 +247,8 @@ export const LivePreviewCard: React.FC<LivePreviewCardProps> = ({
                   <p
                     className={`${
                       data.imagePosition === 'top' || data.imagePosition === 'bottom'
-                        ? 'mt-1 sm:mt-1.5 text-sm sm:text-base'
-                        : 'mt-1.5 sm:mt-2.5 text-sm sm:text-lg md:text-xl'
+                        ? 'mt-0.5 sm:mt-1.5 text-[10px] sm:text-base'
+                        : 'mt-1 sm:mt-2.5 text-xs sm:text-lg md:text-xl'
                     } font-bold tracking-wide relative z-10`}
                     style={{ color: data.accentColor }}
                   >
