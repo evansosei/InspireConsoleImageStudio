@@ -277,7 +277,7 @@ export async function renderQuoteCanvas(
   // Footer Right: Date
   ctx.font = '700 19px "Inter", system-ui, sans-serif';
   ctx.textAlign = 'right';
-  ctx.fillText('♥ ' + (data.dateText || 'Today'), contentX + contentW, footerContentY);
+  ctx.fillText(data.dateText || 'TODAY', contentX + contentW, footerContentY);
   ctx.restore();
 
   // 6. Central Content Layout - Fully occupying the space between header and footer

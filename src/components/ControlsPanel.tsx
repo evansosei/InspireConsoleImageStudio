@@ -260,34 +260,77 @@ export const ControlsPanel: React.FC<ControlsPanelProps> = ({
         {aiError && <p className="text-[11px] text-rose-600 font-medium">{aiError}</p>}
       </div>
 
-      {/* 4. AUTHOR & SOCIAL MEDIA HANDLE */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-2 border-t border-slate-200/80">
-        <div className="space-y-1.5">
-          <label className="text-xs font-bold uppercase tracking-wider text-slate-500 flex items-center gap-1.5">
-            <User className="w-3.5 h-3.5 text-orange-600" />
-            <span>Author</span>
-          </label>
-          <input
-            type="text"
-            value={data.author}
-            onChange={(e) => onChange({ author: e.target.value })}
-            placeholder="e.g. Poster Studio"
-            className="w-full bg-white border border-slate-200 focus:border-orange-500 focus:ring-2 focus:ring-orange-500/20 rounded-xl p-2.5 text-xs text-slate-900 placeholder-slate-400 focus:outline-none shadow-sm"
-          />
+      {/* 4. AUTHOR, BADGE & METADATA */}
+      <div className="space-y-3 pt-2 border-t border-slate-200/80">
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+          <div className="space-y-1.5">
+            <label className="text-xs font-bold uppercase tracking-wider text-slate-500 flex items-center gap-1.5">
+              <User className="w-3.5 h-3.5 text-orange-600" />
+              <span>Author Attribution</span>
+            </label>
+            <input
+              type="text"
+              value={data.author}
+              onChange={(e) => onChange({ author: e.target.value })}
+              placeholder="e.g. Poster Studio"
+              className="w-full bg-white border border-slate-200 focus:border-orange-500 focus:ring-2 focus:ring-orange-500/20 rounded-xl p-2.5 text-xs text-slate-900 placeholder-slate-400 focus:outline-none shadow-sm"
+            />
+          </div>
+
+          <div className="space-y-1.5">
+            <label className="text-xs font-bold uppercase tracking-wider text-slate-500 flex items-center gap-1.5">
+              <AtSign className="w-3.5 h-3.5 text-orange-600" />
+              <span>Social Media Handle</span>
+            </label>
+            <input
+              type="text"
+              value={data.socialHandle}
+              onChange={(e) => onChange({ socialHandle: e.target.value })}
+              placeholder="e.g. @PosterStudio"
+              className="w-full bg-white border border-slate-200 focus:border-orange-500 focus:ring-2 focus:ring-orange-500/20 rounded-xl p-2.5 text-xs text-slate-900 placeholder-slate-400 focus:outline-none shadow-sm"
+            />
+          </div>
         </div>
 
-        <div className="space-y-1.5">
-          <label className="text-xs font-bold uppercase tracking-wider text-slate-500 flex items-center gap-1.5">
-            <AtSign className="w-3.5 h-3.5 text-orange-600" />
-            <span>Handle</span>
-          </label>
-          <input
-            type="text"
-            value={data.socialHandle}
-            onChange={(e) => onChange({ socialHandle: e.target.value })}
-            placeholder="e.g. @PosterStudio"
-            className="w-full bg-white border border-slate-200 focus:border-orange-500 focus:ring-2 focus:ring-orange-500/20 rounded-xl p-2.5 text-xs text-slate-900 placeholder-slate-400 focus:outline-none shadow-sm"
-          />
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+          <div className="space-y-1.5">
+            <div className="flex items-center justify-between">
+              <label className="text-xs font-bold uppercase tracking-wider text-slate-500 flex items-center gap-1.5">
+                <Sparkles className="w-3.5 h-3.5 text-orange-600" />
+                <span>Header Badge</span>
+              </label>
+              <label className="flex items-center gap-1 text-[11px] text-slate-500 font-semibold cursor-pointer">
+                <input
+                  type="checkbox"
+                  checked={data.showBadge}
+                  onChange={(e) => onChange({ showBadge: e.target.checked })}
+                  className="rounded text-orange-600 focus:ring-orange-500 accent-orange-600 w-3.5 h-3.5 cursor-pointer"
+                />
+                <span>Show</span>
+              </label>
+            </div>
+            <input
+              type="text"
+              value={data.badgeText}
+              disabled={!data.showBadge}
+              onChange={(e) => onChange({ badgeText: e.target.value })}
+              placeholder="e.g. DAILY INSPIRATION"
+              className="w-full bg-white border border-slate-200 focus:border-orange-500 focus:ring-2 focus:ring-orange-500/20 rounded-xl p-2.5 text-xs text-slate-900 placeholder-slate-400 focus:outline-none shadow-sm disabled:opacity-50 disabled:bg-slate-50"
+            />
+          </div>
+
+          <div className="space-y-1.5">
+            <label className="text-xs font-bold uppercase tracking-wider text-slate-500 flex items-center gap-1.5">
+              <span>📅 Footer Date</span>
+            </label>
+            <input
+              type="text"
+              value={data.dateText}
+              onChange={(e) => onChange({ dateText: e.target.value })}
+              placeholder="e.g. WEDNESDAY 19TH AUGUST 2026"
+              className="w-full bg-white border border-slate-200 focus:border-orange-500 focus:ring-2 focus:ring-orange-500/20 rounded-xl p-2.5 text-xs text-slate-900 placeholder-slate-400 focus:outline-none shadow-sm"
+            />
+          </div>
         </div>
       </div>
 
